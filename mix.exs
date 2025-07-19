@@ -40,6 +40,7 @@ defmodule Javi.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:petal_components, "~> 3.0"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: :test},
       {:ecto, "~> 3.10"},

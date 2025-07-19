@@ -6,38 +6,68 @@ defmodule JaviWeb.UserRegistrationLive do
 
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm">
-      <.header class="text-center">
-        Register for an account
-        <:subtitle>
-          Already registered?
-          <.link navigate={~p"/users/log_in"} class="font-semibold text-brand hover:underline">
-            Log in
-          </.link>
-          to your account now.
-        </:subtitle>
-      </.header>
+    <div class="flex min-h-screen flex-col bg-[#141414] dark justify-between group/design-root overflow-hidden">
+      <div>
+        <div
+          class="w-full bg-center bg-no-repeat bg-cover flex flex-col justify-end overflow-hidden bg-[#141414] rounded-lg h-[450px] lg:h-80"
+          style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD9gZbtm0ReQ-_8-3zd_zWooPEjBCv926WXbtXxMTuSo36AUJlSWjOv36RVhfBaIT4RIYC4hA08tnMdi-wALYt3VDgE5xs1XhnNcaVT2AdDsDl76SlPT1pI3TrUxOybUXTj5TuaTEfYgcQU8gjBwg9qMtHOH09URNO8RQd1BRw5rkuW7ykX7TOIvfSe_kLuGrFv1h05R0cMvXfpeM2kgNnTNiFOwJbs_jkL7BpLgVcCFqWWeuFrY7XajBQbn7YNTUJbVwdtiyHX_zw3");'
+        >
+        </div>
 
-      <.simple_form
-        for={@form}
-        id="registration_form"
-        phx-submit="save"
-        phx-change="validate"
-        phx-trigger-action={@trigger_submit}
-        action={~p"/users/log_in?_action=registered"}
-        method="post"
-      >
-        <.error :if={@check_errors}>
-          Oops, something went wrong! Please check the errors below.
-        </.error>
-
-        <.input field={@form[:email]} type="email" label="Email" required />
-        <.input field={@form[:password]} type="password" label="Password" required />
-
-        <:actions>
-          <.button phx-disable-with="Creating account..." class="w-full">Create an account</.button>
-        </:actions>
-      </.simple_form>
+        <h1 class="my-3 text-white text-5xl font-bold leading-tight tracking-[-0.015em] text-center">
+          Criar conta
+        </h1>
+        <.form
+          id="registration_form"
+          phx-submit="save"
+          phx-change="validate"
+          phx-trigger-action={@trigger_submit}
+          action={~p"/users/log_in?_action=registered"}
+          method="post"
+          for={@form}
+        >
+          <div class="flex flex-col max-w-[480px] gap-y-2 px-6 py-3 mx-auto">
+            <label class="flex flex-col min-w-40 flex-1">
+              <PetalComponents.Form.email_input
+                form={@form}
+                field={:email}
+                class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#303030] h-14 placeholder:text-[#ababab] p-4 text-base"
+                label="Email"
+                placeholder="Email"
+              />
+            </label>
+            <label class="flex flex-col min-w-40 flex-1">
+              <PetalComponents.Form.password_input
+                form={@form}
+                field={:password}
+                placeholder="Senha"
+                class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#303030] h-14 placeholder:text-[#ababab] p-4 text-base"
+              />
+            </label>
+          </div>
+          <div class="px-6 py-3 max-w-[480px] mx-auto">
+            <button
+              type="submit"
+              class="flex min-w-[84px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-gradient-to-r from-blue-800 to-indigo-900 text-white text-base font-bold tracking-[0.015em]"
+            >
+              <span class="truncate">Criar conta</span>
+            </button>
+          </div>
+          <div class="flex gap-x-2 justify-center mx-auto pt-4">
+            <span class="text-gray-500">
+              Já está cadastrado?
+            </span>
+            <.link href={~p"/users/log_in"}>
+              <span class="text-gray-400 underline">
+                Entre na conta
+              </span>
+            </.link>
+          </div>
+        </.form>
+      </div>
+      <.error :if={@check_errors}>
+        Oops, something went wrong! Please check the errors below.
+      </.error>
     </div>
     """
   end
