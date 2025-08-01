@@ -857,7 +857,7 @@ defmodule Javi.Media.TMDB.Client.ProdTest do
         end)
 
         expected_error = "HTTP #{status}"
-        assert {:error, expected_error} = TMDBProd.search_movies("test")
+        assert {:error, ^expected_error} = TMDBProd.search_movies("test")
       end
     end
 
@@ -875,7 +875,7 @@ defmodule Javi.Media.TMDB.Client.ProdTest do
             end
         end)
 
-        assert {:error, error} = TMDBProd.search_movies("test")
+        assert {:error, ^error} = TMDBProd.search_movies("test")
       end
     end
 

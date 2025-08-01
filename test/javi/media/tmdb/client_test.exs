@@ -50,7 +50,7 @@ defmodule Javi.Media.TMDB.ClientTest do
 
   describe "get_movie_details/1" do
     test "returns test movie details for valid ID" do
-      assert {:ok, movie} = TMDBClient.get_movie_details(1)
+      assert {:ok, movie} = TMDBClient.get_movie_details(123)
       assert movie["title"] == "Test Movie"
     end
 
@@ -68,7 +68,7 @@ defmodule Javi.Media.TMDB.ClientTest do
 
   describe "get_tv_details/1" do
     test "returns test TV show details for valid ID" do
-      assert {:ok, show} = TMDBClient.get_tv_details(1)
+      assert {:ok, show} = TMDBClient.get_tv_details(456)
       assert show["name"] == "Test TV Show"
     end
 
@@ -230,8 +230,8 @@ defmodule Javi.Media.TMDB.ClientTest do
       # Test that the test module returns consistent data structures
       assert {:ok, %{"results" => []}} = TMDBClient.search_movies("test")
       assert {:ok, %{"results" => []}} = TMDBClient.search_tv("test")
-      assert {:ok, %{"title" => "Test Movie"}} = TMDBClient.get_movie_details(1)
-      assert {:ok, %{"name" => "Test TV Show"}} = TMDBClient.get_tv_details(1)
+      assert {:ok, %{"title" => "Test Movie"}} = TMDBClient.get_movie_details(123)
+      assert {:ok, %{"name" => "Test TV Show"}} = TMDBClient.get_tv_details(456)
       assert {:ok, %{"results" => []}} = TMDBClient.get_trending_movies("day")
       assert {:ok, %{"genres" => []}} = TMDBClient.get_movie_genres()
       assert {:ok, %{"genres" => []}} = TMDBClient.get_tv_genres()

@@ -6,7 +6,7 @@ defmodule Javi.Accounts do
   import Ecto.Query, warn: false
   alias Javi.Repo
 
-  alias Javi.Accounts.{User, UserToken, UserNotifier}
+  alias Javi.Accounts.{User, UserToken, UserNotifier, List, ListItem}
 
   ## Database getters
 
@@ -60,6 +60,19 @@ defmodule Javi.Accounts do
   """
   def get_user!(id), do: Repo.get!(User, id)
 
+  @doc """
+  Gets all users.
+
+  ## Examples
+
+      iex> list_users()
+      [%User{}, ...]
+
+  """
+  def list_users do
+    Repo.all(User)
+  end
+
   ## User registration
 
   @doc """
@@ -74,10 +87,55 @@ defmodule Javi.Accounts do
       {:error, %Ecto.Changeset{}}
 
   """
-  def register_user(attrs) do
+  def register_user(attrs \\ %{}) do
     %User{}
     |> User.registration_changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, user} ->
+        # Create default lists for the new user
+        User.create_default_lists(user)
+        {:ok, user}
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  Updates a user.
+
+  ## Examples
+
+      iex> update_user(user, %{field: new_value})
+      {:ok, %User{}}
+
+      iex> update_user(user, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user(%User{} = user, attrs) do
+    user
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates user activity statistics.
+
+  ## Examples
+
+      iex> update_user_activity(user, %{field: new_value})
+      {:ok, %User{}}
+
+      iex> update_user_activity(user, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user_activity(%User{} = user, attrs) do
+    user
+    |> User.activity_changeset(attrs)
+    |> Repo.update()
   end
 
   @doc """
@@ -215,6 +273,127 @@ defmodule Javi.Accounts do
     end
   end
 
+  @doc """
+  Updates the user password without current password validation.
+
+  ## Examples
+
+      iex> update_user_password(user, %{password: ...})
+      {:ok, %User{}}
+
+      iex> update_user_password(user, %{password: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user_password(user, attrs) do
+    user
+    |> User.password_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user profile.
+
+  ## Examples
+
+      iex> change_user_profile(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_profile(user, attrs \\ %{}) do
+    User.profile_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user profile.
+
+  ## Examples
+
+      iex> update_user_profile(user, %{display_name: "John Doe"})
+      {:ok, %User{}}
+
+      iex> update_user_profile(user, %{display_name: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user_profile(user, attrs) do
+    user
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates user privacy settings.
+
+  ## Examples
+
+      iex> update_user_privacy_settings(user, %{public_profile: true})
+      {:ok, %User{}}
+
+      iex> update_user_privacy_settings(user, %{public_profile: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user_privacy_settings(user, attrs) do
+    user
+    |> User.privacy_settings_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates user social settings.
+
+  ## Examples
+
+      iex> update_user_social_settings(user, %{follower_notifications: true})
+      {:ok, %User{}}
+
+      iex> update_user_social_settings(user, %{follower_notifications: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user_social_settings(user, attrs) do
+    user
+    |> User.social_settings_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Removes user photo.
+
+  ## Examples
+
+      iex> remove_user_photo(user)
+      {:ok, %User{}}
+
+      iex> remove_user_photo(user)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def remove_user_photo(user) do
+    user
+    |> User.photo_changeset(%{photo_url: nil})
+    |> Repo.update()
+  end
+
+  @doc """
+  Applies user email without password validation.
+
+  ## Examples
+
+      iex> apply_user_email(user, %{email: "new@example.com"})
+      {:ok, %User{}}
+
+      iex> apply_user_email(user, %{email: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def apply_user_email(user, attrs) do
+    user
+    |> User.email_changeset(attrs)
+    |> Ecto.Changeset.apply_action(:update)
+  end
+
   ## Session
 
   @doc """
@@ -328,6 +507,239 @@ defmodule Javi.Accounts do
     end
   end
 
+  ## Lists
+
+  @doc """
+  Gets all lists for a user.
+
+  ## Examples
+
+      iex> get_user_lists(user)
+      [%List{}, ...]
+
+  """
+  def get_user_lists(%User{} = user) do
+    List
+    |> where([l], l.user_id == ^user.id)
+    |> order_by([l], desc: l.inserted_at)
+    |> preload(list_items: :title)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single list by ID for a user.
+
+  ## Examples
+
+      iex> get_user_list(user, 123)
+      %List{}
+
+      iex> get_user_list(user, 456)
+      nil
+
+  """
+  def get_user_list(%User{} = user, list_id) do
+    List
+    |> where([l], l.id == ^list_id and l.user_id == ^user.id)
+    |> preload(list_items: :title)
+    |> Repo.one()
+  end
+
+  @doc """
+  Creates a new list for a user.
+
+  ## Examples
+
+      iex> create_list(user, %{name: "My Favorites"})
+      {:ok, %List{}}
+
+      iex> create_list(user, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_list(%User{} = user, attrs) do
+    %List{}
+    |> List.create_changeset(Map.put(attrs, :user_id, user.id))
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a list.
+
+  ## Examples
+
+      iex> update_list(list, %{name: "Updated Name"})
+      {:ok, %List{}}
+
+      iex> update_list(list, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_list(%List{} = list, attrs) do
+    list
+    |> List.update_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a list.
+
+  ## Examples
+
+      iex> delete_list(list)
+      {:ok, %List{}}
+
+      iex> delete_list(list)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_list(%List{} = list) do
+    Repo.delete(list)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking list changes.
+
+  ## Examples
+
+      iex> change_list(list)
+      %Ecto.Changeset{data: %List{}}
+
+  """
+  def change_list(%List{} = list, attrs \\ %{}) do
+    List.changeset(list, attrs)
+  end
+
+  ## List Items
+
+  @doc """
+  Gets all items in a list.
+
+  ## Examples
+
+      iex> get_list_items(list)
+      [%ListItem{}, ...]
+
+  """
+  def get_list_items(%List{} = list) do
+    ListItem
+    |> where([li], li.list_id == ^list.id)
+    |> order_by([li], asc: li.position)
+    |> preload(:title)
+    |> Repo.all()
+  end
+
+  @doc """
+  Adds a title to a list.
+
+  ## Examples
+
+      iex> add_title_to_list(list, title)
+      {:ok, %ListItem{}}
+
+      iex> add_title_to_list(list, title)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def add_title_to_list(%List{} = list, %Javi.Media.Title{} = title) do
+    # Get the next position
+    max_position =
+      ListItem
+      |> where([li], li.list_id == ^list.id)
+      |> select([li], coalesce(max(li.position), 0))
+      |> Repo.one()
+
+    result =
+      %ListItem{}
+      |> ListItem.create_changeset(%{
+        list_id: list.id,
+        title_id: title.id,
+        position: max_position + 1
+      })
+      |> Repo.insert()
+
+    # Broadcast stats update if this is a watched list
+    case result do
+      {:ok, _list_item} ->
+        if list.list_type == "watched" do
+          Phoenix.PubSub.broadcast(
+            Javi.PubSub,
+            "user_stats:#{list.user_id}",
+            {:stats_updated, list.user_id}
+          )
+        end
+
+      _ ->
+        :ok
+    end
+
+    result
+  end
+
+  @doc """
+  Removes a title from a list.
+
+  ## Examples
+
+      iex> remove_title_from_list(list, title)
+      {:ok, %ListItem{}}
+
+      iex> remove_title_from_list(list, title)
+      {:error, :not_found}
+
+  """
+  def remove_title_from_list(%List{} = list, %Javi.Media.Title{} = title) do
+    case Repo.get_by(ListItem, list_id: list.id, title_id: title.id) do
+      nil -> {:error, :not_found}
+      list_item -> Repo.delete(list_item)
+    end
+  end
+
+  def remove_title_from_list(%List{} = list, list_item_id) when is_binary(list_item_id) do
+    case Repo.get_by(ListItem, id: list_item_id, list_id: list.id) do
+      nil ->
+        {:error, :not_found}
+
+      list_item ->
+        result = Repo.delete(list_item)
+
+        # Broadcast stats update if this is a watched list
+        case result do
+          {:ok, _deleted_item} ->
+            if list.list_type == "watched" do
+              Phoenix.PubSub.broadcast(
+                Javi.PubSub,
+                "user_stats:#{list.user_id}",
+                {:stats_updated, list.user_id}
+              )
+            end
+
+          _ ->
+            :ok
+        end
+
+        result
+    end
+  end
+
+  @doc """
+  Updates a list item.
+
+  ## Examples
+
+      iex> update_list_item(list_item, %{notes: "Great movie!"})
+      {:ok, %ListItem{}}
+
+      iex> update_list_item(list_item, %{notes: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_list_item(%ListItem{} = list_item, attrs) do
+    list_item
+    |> ListItem.update_changeset(attrs)
+    |> Repo.update()
+  end
+
   @doc """
   Resets the user password.
 
@@ -349,5 +761,15 @@ defmodule Javi.Accounts do
       {:ok, %{user: user}} -> {:ok, user}
       {:error, :user, changeset, _} -> {:error, changeset}
     end
+  end
+
+  @doc """
+  Gets a user's watched list.
+  """
+  def get_user_watched_list(%User{} = user) do
+    List
+    |> where([l], l.user_id == ^user.id and l.list_type == "watched")
+    |> preload(list_items: :title)
+    |> Repo.one()
   end
 end

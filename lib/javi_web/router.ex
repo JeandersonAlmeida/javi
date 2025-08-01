@@ -17,10 +17,27 @@ defmodule JaviWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :pwa do
+    plug :accepts, ["html", "json", "js"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {JaviWeb.Layouts, :root}
+    plug :put_secure_browser_headers
+    plug :fetch_current_user
+  end
+
   scope "/", JaviWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    get "/", LandingController, :index
+  end
+
+  scope "/", JaviWeb do
+    pipe_through :pwa
+
+    get "/manifest.json", PWAController, :manifest
+    get "/sw.js", PWAController, :service_worker
+    get "/pwa.js", PWAController, :pwa_script
   end
 
   # Other scopes may use custom stacks.
@@ -52,13 +69,13 @@ defmodule JaviWeb.Router do
 
     live_session :redirect_if_user_is_authenticated,
       on_mount: [{JaviWeb.UserAuth, :redirect_if_user_is_authenticated}] do
-      live "/users/register", UserRegistrationLive, :new
-      live "/users/log_in", UserLoginLive, :new
-      live "/users/reset_password", UserForgotPasswordLive, :new
-      live "/users/reset_password/:token", UserResetPasswordLive, :edit
+      live "/cadastrar", Account.RegistrationLive, :new
+      live "/entrar", Account.LoginLive, :new
+      live "/redefinir-senha", Account.ForgotPasswordLive, :new
+      live "/redefinir-senha/:token", Account.ResetPasswordLive, :edit
     end
 
-    post "/users/log_in", UserSessionController, :create
+    post "/entrar", UserSessionController, :create
   end
 
   scope "/", JaviWeb do
@@ -66,20 +83,27 @@ defmodule JaviWeb.Router do
 
     live_session :require_authenticated_user,
       on_mount: [{JaviWeb.UserAuth, :ensure_authenticated}] do
-      live "/users/settings", UserSettingsLive, :edit
-      live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
+      live "/inicio", Home.DashboardLive, :index
+      live "/listas", Home.ListLive, :index
+      live "/listas/:id", Home.ListDetailLive, :show
+      live "/titulos/:id", Home.TitleDetailLive, :show
+      live "/pesquisar", Home.SearchLive, :index
+      live "/perfil", Home.ProfileLive, :index
+      live "/configuracoes", Home.UserSettingsLive, :edit
+      live "/configuracoes/confirmar-email/:token", Home.UserSettingsLive, :confirm_email
+      live "/onboarding", Onboarding.OnboardingLive, :index
     end
   end
 
   scope "/", JaviWeb do
     pipe_through [:browser]
 
-    delete "/users/log_out", UserSessionController, :delete
+    delete "/sair", UserSessionController, :delete
 
     live_session :current_user,
       on_mount: [{JaviWeb.UserAuth, :mount_current_user}] do
-      live "/users/confirm/:token", UserConfirmationLive, :edit
-      live "/users/confirm", UserConfirmationInstructionsLive, :new
+      live "/confirmar/:token", Account.ConfirmationLive, :edit
+      live "/confirmar", Account.ConfirmationInstructionsLive, :new
     end
   end
 end

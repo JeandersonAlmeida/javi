@@ -1,0 +1,287 @@
+<div
+  class="relative flex size-full min-h-screen flex-col bg-[#141414] dark justify-between group/design-root overflow-x-hidden lg:ml-64"
+  style='font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;'
+>
+  <!-- Header -->
+  <div class="fixed top-0 left-0 right-0 z-50 flex items-center bg-[#141414] p-4 pb-2 justify-between lg:ml-64 border-b border-[#303030]">
+    <button
+      class="text-white flex size-12 shrink-0 items-center"
+      phx-click="go_back"
+      data-icon="ArrowLeft"
+      data-size="24px"
+      data-weight="regular"
+    >
+      <.icon name="hero-arrow-left" class="w-6 h-6" />
+    </button>
+    <h2 class="text-white text-lg lg:text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center">
+      Detalhes
+    </h2>
+    <div class="w-12"></div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto pb-24 pt-20">
+    <%= if @title do %>
+      <div class="p-4">
+        <!-- Full Width Image -->
+        <div class="mb-6">
+          <div
+            class="w-full h-64 bg-center bg-no-repeat bg-cover rounded-xl"
+            style={"background-image: url(\"https://image.tmdb.org/t/p/original#{if @title.backdrop_path && @title.backdrop_path != "" && @title.backdrop_path != nil, do: @title.backdrop_path, else: @title.poster_path}\");"}
+          >
+          </div>
+        </div>
+        
+<!-- Basic Info -->
+        <div class="mb-6">
+          <h1 class="text-white text-3xl font-bold leading-tight tracking-[-0.015em] mb-3">
+            {@title.title}
+          </h1>
+
+          <%= if @title.release_date != nil or @title.first_air_date do %>
+            <p class="text-[#ababab] text-lg font-medium leading-normal mb-4">
+              {if @title.release_date, do: @title.release_date, else: @title.first_air_date}
+            </p>
+          <% end %>
+          
+<!-- Rating and Vote Section -->
+          <div class="mb-6">
+            <!-- TMDB Vote -->
+            <%= if @title.vote_average do %>
+              <div class="flex items-center gap-2 mb-4">
+                <div class="flex items-center">
+                  <.icon name="hero-star" class="w-5 h-5 text-yellow-400" />
+                  <span class="text-white text-lg font-semibold ml-1">
+                    {if @title.vote_average,
+                      do: Decimal.to_float(@title.vote_average) |> Float.round(1),
+                      else: "0.0"}
+                  </span>
+                </div>
+                <span class="text-[#ababab] text-sm">/ 10</span>
+              </div>
+            <% end %>
+            
+<!-- User Rating for Watched Titles -->
+            <%= if @user && @is_in_watched do %>
+              <div class="flex items-center gap-3">
+                <span class="text-[#ababab] text-sm font-medium">Sua Avaliação:</span>
+                <div class="flex items-center gap-1">
+                  <%= for star <- 1..5 do %>
+                    <button
+                      phx-click="rate_title"
+                      phx-value-rating={star}
+                      class={"text-xl transition-colors #{if @user_rating && @user_rating >= star, do: "text-yellow-400", else: "text-gray-400 hover:text-yellow-300"}"}
+                    >
+                      ★
+                    </button>
+                  <% end %>
+                  <%= if @user_rating do %>
+                    <span class="text-[#ababab] text-sm ml-2">
+                      ({@user_rating}/5)
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            
+<!-- Mark as Watched Button (only for unwatched titles) -->
+            <%= if @user && !@is_in_watched do %>
+              <div class="flex items-center gap-3">
+                <button
+                  phx-click="add_to_watched"
+                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  <.icon name="hero-eye" class="w-4 h-4" /> Marcar como Assistido
+                </button>
+              </div>
+            <% end %>
+          </div>
+          
+<!-- Title Details Section -->
+          <div class="space-y-3 mb-6">
+            <%= if @title.runtime && @title.runtime > 0 do %>
+              <div class="flex items-center gap-2">
+                <span class="text-[#ababab] text-sm font-medium">Duração:</span>
+                <span class="text-white text-sm">{@title.runtime} min</span>
+              </div>
+            <% end %>
+
+            <%= if (@title.number_of_seasons != nil && @title.number_of_seasons > 0) or (@title.number_of_episodes && @title.number_of_episodes > 0) do %>
+              <div class="flex items-center gap-4">
+                <%= if @title.number_of_seasons && @title.number_of_seasons > 0 do %>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[#ababab] text-sm font-medium">Temporadas:</span>
+                    <span class="text-white text-sm">{@title.number_of_seasons}</span>
+                  </div>
+                <% end %>
+                <%= if @title.number_of_episodes && @title.number_of_episodes > 0 do %>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[#ababab] text-sm font-medium">Episódios:</span>
+                    <span class="text-white text-sm">{@title.number_of_episodes}</span>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+          
+<!-- Genres Section -->
+          <%= if @title.genres && length(@title.genres) > 0 do %>
+            <div class="mb-6">
+              <h3 class="text-white text-lg font-semibold mb-3">Gêneros</h3>
+              <div class="flex flex-wrap gap-2">
+                <%= for genre <- translate_genre_ids(@title.genres) do %>
+                  <span class="bg-[#333333] text-white px-3 py-1 rounded-full text-sm font-medium">
+                    {genre}
+                  </span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+          
+<!-- User Lists Section -->
+          <%= if @user do %>
+            <div class="mb-6">
+              <!-- Lists Badge -->
+              <%= if length(@title_lists) > 0 do %>
+                <div class="mb-4">
+                  <h3 class="text-white text-lg font-semibold mb-3">Em suas listas</h3>
+                  <div class="flex flex-wrap gap-2">
+                    <%= for list <- @title_lists do %>
+                      <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        {list.name}
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              
+<!-- Add to Lists Button -->
+              <button
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                phx-click="show_add_to_lists_modal"
+                phx-value-title={
+                  Jason.encode!(%{
+                    "id" => @title.tmdb_id,
+                    "title" => @title.title,
+                    "name" => @title.title,
+                    "overview" => @title.overview,
+                    "release_date" => @title.release_date,
+                    "first_air_date" => @title.first_air_date,
+                    "vote_average" => @title.vote_average,
+                    "vote_count" => @title.vote_count,
+                    "popularity" => @title.popularity,
+                    "poster_path" => @title.poster_path,
+                    "backdrop_path" => @title.backdrop_path,
+                    "adult" => @title.adult,
+                    "genre_ids" => @title.genres,
+                    "media_type" => @title.tmdb_type
+                  })
+                }
+              >
+                <.icon name="hero-plus" class="w-5 h-5" /> Adicionar às Listas
+              </button>
+            </div>
+          <% end %>
+        </div>
+        
+<!-- Overview -->
+        <%= if @title.overview do %>
+          <div class="mb-6">
+            <h3 class="text-white text-xl font-bold leading-tight tracking-[-0.015em] mb-3">
+              Sinopse
+            </h3>
+            <p class="text-[#ababab] text-base font-normal leading-relaxed">
+              {@title.overview}
+            </p>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="flex flex-col items-center justify-center p-8">
+        <div class="text-center">
+          <p class="text-[#ababab] text-base font-medium leading-normal mb-2">
+            Título não encontrado
+          </p>
+          <p class="text-[#ababab] text-sm font-normal leading-normal">
+            O título que você está procurando não existe ou foi removido
+          </p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <.bottom_navigation current_page={@current_page} />
+</div>
+
+<!-- Add to Lists Modal -->
+<%= if @show_modal do %>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-[#1a1a1a] rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-white text-lg font-bold">Adicionar às Listas</h3>
+        <button phx-click="close_modal" class="text-gray-400 hover:text-white transition-colors">
+          <.icon name="hero-x" class="w-6 h-6" />
+        </button>
+      </div>
+      
+<!-- Selected Title Info -->
+      <%= if @selected_title do %>
+        <div class="flex items-center gap-3 mb-4 p-3 bg-[#2a2a2a] rounded-lg">
+          <div
+            class="w-16 h-24 bg-center bg-no-repeat bg-cover rounded"
+            style={"background-image: url(\"https://image.tmdb.org/t/p/w200#{@selected_title["poster_path"]}\");"}
+          >
+          </div>
+          <div class="flex-1">
+            <h4 class="text-white font-semibold">
+              {@selected_title["title"] || @selected_title["name"]}
+            </h4>
+            <p class="text-gray-400 text-sm">
+              {@selected_title["release_date"] || @selected_title["first_air_date"]}
+            </p>
+          </div>
+        </div>
+      <% end %>
+      
+<!-- Lists Selection -->
+      <div class="mb-4">
+        <h4 class="text-white font-medium mb-3">Selecione as listas:</h4>
+        <div class="space-y-2 max-h-60 overflow-y-auto">
+          <%= for list <- @user_lists do %>
+            <label class="flex items-center gap-3 p-3 bg-[#2a2a2a] rounded-lg cursor-pointer hover:bg-[#333333] transition-colors">
+              <input
+                type="checkbox"
+                value={list.id}
+                checked={to_string(list.id) in @selected_lists}
+                phx-click="toggle_list_selection"
+                phx-value-list_id={list.id}
+                class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+              />
+              <div class="flex-1">
+                <p class="text-white font-medium">{list.name}</p>
+                <p class="text-gray-400 text-sm">{length(list.list_items || [])} itens</p>
+              </div>
+            </label>
+          <% end %>
+        </div>
+      </div>
+      
+<!-- Modal Actions -->
+      <div class="flex gap-3">
+        <button
+          phx-click="close_modal"
+          class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          phx-click="add_to_selected_lists"
+          disabled={length(@selected_lists) == 0}
+          class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Adicionar ({length(@selected_lists)})
+        </button>
+      </div>
+    </div>
+  </div>
+<% end %>

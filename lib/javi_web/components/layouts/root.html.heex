@@ -4,6 +4,30 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
+    
+<!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#8b5cf6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Javi" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Javi" />
+    <meta name="msapplication-TileColor" content="#8b5cf6" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+<!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+<!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/images/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/images/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icon-180x180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/images/icon-167x167.png" />
+    
+<!-- Microsoft Tiles -->
+    <meta name="msapplication-TileImage" content="/images/icon-144x144.png" />
+    <meta name="msapplication-config" content="none" />
+
     <.live_title default="Javi" suffix=" · Phoenix Framework">
       {assigns[:page_title]}
     </.live_title>
@@ -15,6 +39,8 @@
       rel="stylesheet"
     />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    </script>
+    <script defer type="text/javascript" src="/pwa.js">
     </script>
   </head>
   <body>

@@ -94,6 +94,66 @@ defmodule Javi.Media.TMDB.Client.Prod do
   def get_trending_movies(_), do: {:error, "Invalid time window. Use 'day' or 'week'"}
 
   @impl Javi.Media.TMDB.Client
+  def get_trending_tv(time_window \\ "day")
+
+  def get_trending_tv(time_window) when time_window in ["day", "week"] do
+    case get("/trending/tv/#{time_window}", query: [api_key: get_api_key(), language: "pt-BR"]) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def get_trending_tv(_), do: {:error, "Invalid time window. Use 'day' or 'week'"}
+
+  @impl Javi.Media.TMDB.Client
+  def get_popular_movies do
+    case get("/movie/popular", query: [api_key: get_api_key(), language: "pt-BR"]) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @impl Javi.Media.TMDB.Client
+  def get_top_rated_movies do
+    case get("/movie/top_rated", query: [api_key: get_api_key(), language: "pt-BR"]) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @impl Javi.Media.TMDB.Client
+  def get_upcoming_movies do
+    case get("/movie/upcoming", query: [api_key: get_api_key(), language: "pt-BR"]) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @impl Javi.Media.TMDB.Client
   def get_movie_genres do
     case get("/genre/movie/list", query: [api_key: get_api_key(), language: "pt-BR"]) do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
@@ -134,6 +194,67 @@ defmodule Javi.Media.TMDB.Client.Prod do
         {:error, reason}
     end
   end
+
+  @impl Javi.Media.TMDB.Client
+  def get_recent_movies do
+    case get("/movie/now_playing", query: [api_key: get_api_key(), language: "pt-BR"]) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @impl Javi.Media.TMDB.Client
+  def get_movies_by_genre(genre_id) when is_integer(genre_id) and genre_id > 0 do
+    case get("/discover/movie",
+           query: [
+             api_key: get_api_key(),
+             language: "pt-BR",
+             with_genres: genre_id,
+             sort_by: "popularity.desc"
+           ]
+         ) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def get_movies_by_genre(_), do: {:error, "Invalid genre ID"}
+
+  @impl Javi.Media.TMDB.Client
+  def get_popular_movies_by_genre(genre_id) when is_integer(genre_id) and genre_id > 0 do
+    case get("/discover/movie",
+           query: [
+             api_key: get_api_key(),
+             language: "pt-BR",
+             with_genres: genre_id,
+             sort_by: "vote_average.desc",
+             "vote_count.gte": 100
+           ]
+         ) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def get_popular_movies_by_genre(_), do: {:error, "Invalid genre ID"}
 
   # Private functions
 

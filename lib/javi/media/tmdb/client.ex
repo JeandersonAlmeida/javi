@@ -9,9 +9,16 @@ defmodule Javi.Media.TMDB.Client do
   @callback get_movie_details(integer()) :: {:ok, map()} | {:error, String.t()}
   @callback get_tv_details(integer()) :: {:ok, map()} | {:error, String.t()}
   @callback get_trending_movies(String.t()) :: {:ok, map()} | {:error, String.t()}
+  @callback get_trending_tv(String.t()) :: {:ok, map()} | {:error, String.t()}
+  @callback get_popular_movies() :: {:ok, map()} | {:error, String.t()}
+  @callback get_top_rated_movies() :: {:ok, map()} | {:error, String.t()}
+  @callback get_upcoming_movies() :: {:ok, map()} | {:error, String.t()}
   @callback get_movie_genres() :: {:ok, map()} | {:error, String.t()}
   @callback get_tv_genres() :: {:ok, map()} | {:error, String.t()}
   @callback get_top_searches() :: {:ok, map()} | {:error, String.t()}
+  @callback get_recent_movies() :: {:ok, map()} | {:error, String.t()}
+  @callback get_movies_by_genre(integer()) :: {:ok, map()} | {:error, String.t()}
+  @callback get_popular_movies_by_genre(integer()) :: {:ok, map()} | {:error, String.t()}
 
   def search_movies(query) do
     get_client().search_movies(query)
@@ -33,6 +40,22 @@ defmodule Javi.Media.TMDB.Client do
     get_client().get_trending_movies(time_window)
   end
 
+  def get_trending_tv(time_window \\ "day") do
+    get_client().get_trending_tv(time_window)
+  end
+
+  def get_popular_movies() do
+    get_client().get_popular_movies()
+  end
+
+  def get_top_rated_movies() do
+    get_client().get_top_rated_movies()
+  end
+
+  def get_upcoming_movies() do
+    get_client().get_upcoming_movies()
+  end
+
   def get_movie_genres() do
     get_client().get_movie_genres()
   end
@@ -43,6 +66,18 @@ defmodule Javi.Media.TMDB.Client do
 
   def get_top_searches() do
     get_client().get_top_searches()
+  end
+
+  def get_recent_movies() do
+    get_client().get_recent_movies()
+  end
+
+  def get_movies_by_genre(genre_id) do
+    get_client().get_movies_by_genre(genre_id)
+  end
+
+  def get_popular_movies_by_genre(genre_id) do
+    get_client().get_popular_movies_by_genre(genre_id)
   end
 
   defp get_client do
