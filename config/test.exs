@@ -38,3 +38,12 @@ config :phoenix, :plug_init_mode, :runtime
 # Enable helpful, but potentially expensive runtime checks
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
+
+# Configure Tesla to use mock adapter for testing
+config :tesla, adapter: Tesla.Mock
+
+# Configure TMDB client for testing
+config :javi, :tmdb_client, Javi.Media.TMDB.Client.Test
+
+# Configure TMDB API key for testing
+config :javi, :tmdb_api_key, System.get_env("TMDB_API_KEY")
