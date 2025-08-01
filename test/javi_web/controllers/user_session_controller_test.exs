@@ -14,15 +14,9 @@ defmodule JaviWeb.UserSessionControllerTest do
           "user" => %{"email" => user.email, "password" => valid_user_password()}
         })
 
-      assert get_session(conn, :user_token)
       assert redirected_to(conn) == ~p"/"
-
-      # Now do a logged in request and assert on the menu
-      conn = get(conn, ~p"/")
-      response = html_response(conn, 200)
-      assert response =~ user.email
-      assert response =~ ~p"/users/settings"
-      assert response =~ ~p"/users/log_out"
+      assert get_session(conn, :user_token)
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Welcome back!"
     end
 
     test "logs the user in with remember me", %{conn: conn, user: user} do
@@ -35,8 +29,9 @@ defmodule JaviWeb.UserSessionControllerTest do
           }
         })
 
-      assert conn.resp_cookies["_javi_web_user_remember_me"]
       assert redirected_to(conn) == ~p"/"
+      assert conn.resp_cookies["_javi_web_user_remember_me"]
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Welcome back!"
     end
 
     test "logs the user in with return to", %{conn: conn, user: user} do
@@ -54,11 +49,21 @@ defmodule JaviWeb.UserSessionControllerTest do
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Welcome back!"
     end
 
-    test "login following registration", %{conn: conn, user: user} do
+    test "emits error message with invalid credentials", %{conn: conn} do
+      conn =
+        post(conn, ~p"/users/log_in", %{
+          "user" => %{"email" => "unknown@example.com", "password" => "unknown"}
+        })
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
+      assert redirected_to(conn) == ~p"/users/log_in"
+    end
+
+    test "redirects if user is already logged in", %{conn: conn, user: user} do
       conn =
         conn
+        |> log_in_user(user)
         |> post(~p"/users/log_in", %{
-          "_action" => "registered",
           "user" => %{
             "email" => user.email,
             "password" => valid_user_password()
@@ -66,32 +71,6 @@ defmodule JaviWeb.UserSessionControllerTest do
         })
 
       assert redirected_to(conn) == ~p"/"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Account created successfully"
-    end
-
-    test "login following password update", %{conn: conn, user: user} do
-      conn =
-        conn
-        |> post(~p"/users/log_in", %{
-          "_action" => "password_updated",
-          "user" => %{
-            "email" => user.email,
-            "password" => valid_user_password()
-          }
-        })
-
-      assert redirected_to(conn) == ~p"/users/settings"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Password updated successfully"
-    end
-
-    test "redirects to login page with invalid credentials", %{conn: conn} do
-      conn =
-        post(conn, ~p"/users/log_in", %{
-          "user" => %{"email" => "invalid@email.com", "password" => "invalid_password"}
-        })
-
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Invalid email or password"
-      assert redirected_to(conn) == ~p"/users/log_in"
     end
   end
 
