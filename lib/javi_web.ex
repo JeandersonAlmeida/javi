@@ -56,6 +56,8 @@ defmodule JaviWeb do
         layout: {JaviWeb.Layouts, :app}
 
       unquote(html_helpers())
+
+      use JaviWeb.Helpers
     end
   end
 

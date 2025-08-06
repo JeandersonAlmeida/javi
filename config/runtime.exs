@@ -117,4 +117,10 @@ if config_env() == :prod do
   #     config :swoosh, :api_client, Swoosh.ApiClient.Hackney
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+
+  # Configure TMDB client for production
+  config :javi, :tmdb_client, Javi.Media.TMDB.Client.Prod
+
+  # Configure TMDB API key for production
+  config :javi, :tmdb_api_key, System.get_env("TMDB_API_KEY")
 end

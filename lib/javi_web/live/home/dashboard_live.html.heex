@@ -1,0 +1,245 @@
+<div
+  class="relative flex size-full min-h-screen flex-col bg-[#141414] dark justify-between group/design-root overflow-x-hidden lg:ml-64"
+  style='font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;'
+>
+  <!-- Header -->
+  <div class="fixed top-0 left-0 right-0 z-50 flex items-center bg-[#141414] p-4 pb-2 justify-between lg:ml-64 border-b border-[#303030]">
+    <div class="w-12"></div>
+    <h2 class="text-white text-lg lg:text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center">
+      Dashboard
+    </h2>
+    <div class="w-12"></div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto pb-24 pt-20">
+    <div class="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
+      <h3 class="text-white tracking-light text-2xl lg:text-3xl font-bold leading-tight text-left pb-2 lg:pb-4">
+        Olá, {if @user, do: @user.display_name || "Usuário", else: "Visitante"}!
+      </h3>
+
+      <div class="flex gap-4 lg:gap-6 mb-6 lg:mb-8">
+        <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 lg:p-8 border border-[#474747]">
+          <p class="text-white text-base lg:text-lg font-medium leading-normal">
+            Filmes Assistidos
+          </p>
+          <p class="text-white tracking-light text-2xl lg:text-3xl font-bold leading-tight">
+            {@user_stats.watched_movies}
+          </p>
+        </div>
+        <div class="flex flex-1 flex-col gap-2 rounded-xl p-6 lg:p-8 border border-[#474747]">
+          <p class="text-white text-base lg:text-lg font-medium leading-normal">
+            Séries Assistidas
+          </p>
+          <p class="text-white tracking-light text-2xl lg:text-3xl font-bold leading-tight">
+            {@user_stats.watched_tv_series}
+          </p>
+        </div>
+      </div>
+
+      <h2 class="text-white text-[22px] lg:text-2xl font-bold leading-tight tracking-[-0.015em] pb-3 lg:pb-6 pt-5 lg:pt-8">
+        Minhas Listas
+      </h2>
+
+      <%= if length(@all_lists) > 0 do %>
+        <div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div class="flex items-stretch p-4 lg:p-6 gap-3 lg:gap-6">
+            <%= for {list, index} <- Enum.with_index(@all_lists) do %>
+              <div
+                class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40 lg:min-w-48 animate-slide-in"
+                style={"animation-delay: #{index * 0.1}s;"}
+              >
+                <div
+                  class="w-full aspect-[3/4] rounded-xl flex flex-col relative cursor-pointer hover:opacity-90 transition-all duration-300 hover:scale-105 hover:shadow-lg overflow-hidden"
+                  phx-click="navigate_to_list"
+                  phx-value-list-id={list.id}
+                >
+                  <%= if length(list.list_items) > 2 do %>
+                    <div class="relative w-full h-full poster-carousel">
+                      <%= for {item, poster_index} <- Enum.with_index(list.list_items) do %>
+                        <div
+                          class="absolute inset-0 bg-center bg-no-repeat bg-cover poster-slide"
+                          style={"background-image: url(\"https://image.tmdb.org/t/p/w500#{item.title.poster_path}\");"}
+                          data-poster-index={poster_index}
+                        >
+                          <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div
+                      class="w-full h-full bg-center bg-no-repeat bg-cover"
+                      style={
+                        if length(list.list_items) == 1 do
+                          "background-image: url(\"https://image.tmdb.org/t/p/w500#{List.first(list.list_items).title.poster_path}\");"
+                        else
+                          get_list_background_style(list)
+                        end
+                      }
+                    >
+                      <div class="absolute inset-0 bg-black bg-opacity-40 rounded-xl"></div>
+                    </div>
+                  <% end %>
+                  <div class="absolute bottom-2 left-2 right-2 z-10">
+                    <p class="text-white text-sm lg:text-base font-semibold leading-tight">
+                      {list.name}
+                    </p>
+                    <p class="text-white text-xs lg:text-sm opacity-90 leading-tight">
+                      {length(list.list_items)} itens
+                    </p>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <div class="flex flex-col items-center justify-center p-8 lg:p-12">
+          <div class="text-center">
+            <p class="text-[#ababab] text-base lg:text-lg font-medium leading-normal mb-2">
+              Você ainda não tem listas
+            </p>
+            <p class="text-[#ababab] text-sm lg:text-base font-normal leading-normal mb-4 lg:mb-6">
+              Comece criando suas primeiras listas para organizar seus filmes e séries
+            </p>
+            <button
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 lg:px-8 py-2 lg:py-3 rounded-lg font-medium transition-colors text-sm lg:text-base"
+              phx-click="navigate_to_lists"
+            >
+              Criar Lista
+            </button>
+          </div>
+        </div>
+      <% end %>
+
+      <%= if length(@recent_movies) > 0 do %>
+        <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
+          Filmes Recentes
+        </h2>
+        <div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div class="flex items-stretch p-4 gap-3">
+            <%= for {movie, index} <- Enum.with_index(@recent_movies) do %>
+              <div
+                class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40 animate-slide-in"
+                style={"animation-delay: #{index * 0.1}s;"}
+              >
+                <div class="relative group">
+                  <div
+                    class="w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-xl flex flex-col cursor-pointer hover:opacity-90 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                    style={"background-image: url(\"https://image.tmdb.org/t/p/w500#{movie["poster_path"]}\");"}
+                    phx-click="navigate_to_title"
+                    phx-value-title={Jason.encode!(movie)}
+                  >
+                  </div>
+                  <div class="absolute top-2 right-2">
+                    <button
+                      phx-click="show_add_to_lists_modal"
+                      phx-value-title={Jason.encode!(movie)}
+                      class="bg-blue-600 text-white p-2 rounded-full shadow-lg opacity-80 hover:opacity-100 transition-all duration-200"
+                      title="Adicionar às Listas"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16px"
+                        height="16px"
+                        fill="currentColor"
+                        viewBox="0 0 256 256"
+                      >
+                        <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z">
+                        </path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <.bottom_navigation current_page={@current_page} />
+</div>
+
+<!-- Add to Lists Modal -->
+<%= if @show_modal do %>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-[#1a1a1a] rounded-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-white text-lg font-bold">Adicionar às Listas</h3>
+        <button phx-click="close_modal" class="text-gray-400 hover:text-white transition-colors">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24px"
+            height="24px"
+            fill="currentColor"
+            viewBox="0 0 256 256"
+          >
+            <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z">
+            </path>
+          </svg>
+        </button>
+      </div>
+      
+<!-- Selected Title Info -->
+      <%= if @selected_title do %>
+        <div class="flex items-center gap-3 mb-4 p-3 bg-[#2a2a2a] rounded-lg">
+          <div
+            class="w-16 h-24 bg-center bg-no-repeat bg-cover rounded"
+            style={"background-image: url(\"https://image.tmdb.org/t/p/w200#{@selected_title["poster_path"]}\");"}
+          >
+          </div>
+          <div class="flex-1">
+            <h4 class="text-white font-semibold">
+              {@selected_title["title"] || @selected_title["name"]}
+            </h4>
+            <p class="text-gray-400 text-sm">
+              {@selected_title["release_date"] || @selected_title["first_air_date"]}
+            </p>
+          </div>
+        </div>
+      <% end %>
+      
+<!-- Lists Selection -->
+      <div class="mb-4">
+        <h4 class="text-white font-medium mb-3">Selecione as listas:</h4>
+        <div class="space-y-2 max-h-60 overflow-y-auto">
+          <%= for list <- @user_lists do %>
+            <label class="flex items-center gap-3 p-3 bg-[#2a2a2a] rounded-lg cursor-pointer hover:bg-[#333333] transition-colors">
+              <input
+                type="checkbox"
+                value={list.id}
+                checked={to_string(list.id) in @selected_lists}
+                phx-click="toggle_list_selection"
+                phx-value-list_id={list.id}
+                class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+              />
+              <div class="flex-1">
+                <p class="text-white font-medium">{list.name}</p>
+                <p class="text-gray-400 text-sm">{length(list.list_items || [])} itens</p>
+              </div>
+            </label>
+          <% end %>
+        </div>
+      </div>
+      
+<!-- Modal Actions -->
+      <div class="flex gap-3">
+        <button
+          phx-click="close_modal"
+          class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          phx-click="add_to_selected_lists"
+          disabled={length(@selected_lists) == 0}
+          class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Adicionar ({length(@selected_lists)})
+        </button>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -83,3 +83,9 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Configure TMDB client for development
+config :javi, :tmdb_client, Javi.Media.TMDB.Client.Prod
+
+# Configure TMDB API key for development
+config :javi, :tmdb_api_key, System.get_env("TMDB_API_KEY")

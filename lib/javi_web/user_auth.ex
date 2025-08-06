@@ -157,8 +157,8 @@ defmodule JaviWeb.UserAuth do
     else
       socket =
         socket
-        |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/users/log_in")
+        |> Phoenix.LiveView.put_flash(:error, "Você deve fazer login para acessar esta página.")
+        |> Phoenix.LiveView.redirect(to: ~p"/entrar")
 
       {:halt, socket}
     end
@@ -206,9 +206,9 @@ defmodule JaviWeb.UserAuth do
       conn
     else
       conn
-      |> put_flash(:error, "You must log in to access this page.")
+      |> put_flash(:error, "Você deve fazer login para acessar esta página.")
       |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log_in")
+      |> redirect(to: ~p"/entrar")
       |> halt()
     end
   end
@@ -225,5 +225,5 @@ defmodule JaviWeb.UserAuth do
 
   defp maybe_store_return_to(conn), do: conn
 
-  defp signed_in_path(_conn), do: ~p"/"
+  defp signed_in_path(_conn), do: ~p"/inicio"
 end
