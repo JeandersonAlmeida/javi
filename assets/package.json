@@ -1,0 +1,30 @@
+{
+  "name": "javi-assets",
+  "version": "1.0.0",
+  "description": "Assets for Javi Phoenix application",
+  "scripts": {
+    "build": "webpack --mode=production",
+    "watch": "webpack --mode=development --watch",
+    "dev": "webpack --mode=development"
+  },
+  "dependencies": {
+    "phoenix": "~1.7.0",
+    "phoenix_html": "~4.0.0",
+    "phoenix_live_view": "~0.20.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
+    "autoprefixer": "^10.4.16",
+    "css-loader": "^6.8.1",
+    "esbuild": "^0.19.8",
+    "esbuild-loader": "^2.0.3",
+    "postcss": "^8.4.32",
+    "postcss-loader": "^7.3.3",
+    "tailwindcss": "^3.3.6",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
