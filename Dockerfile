@@ -18,7 +18,7 @@
       apt-get update -y && \
       apt-get install -y nodejs && \
       apt-get clean && rm -rf /var/lib/apt/lists/*
-  
+
   # Set app working directory
   WORKDIR /app
   
