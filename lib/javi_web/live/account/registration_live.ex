@@ -251,7 +251,7 @@ defmodule JaviWeb.Account.RegistrationLive do
       |> assign(check_errors: false, validated_fields: MapSet.new())
       |> assign_form(changeset)
 
-    {:ok, socket, temporary_assigns: [form: nil]}
+    {:ok, socket}
   end
 
   def handle_event("save", %{"user" => user_params}, socket) do
@@ -290,7 +290,12 @@ defmodule JaviWeb.Account.RegistrationLive do
 
   def handle_event("validate_field", %{"field" => field, "value" => value}, socket) do
     # Get current form data and update the specific field
-    current_params = socket.assigns.form.params || %{}
+    current_params =
+      case socket.assigns.form do
+        nil -> %{}
+        form -> form.params || %{}
+      end
+
     updated_params = Map.put(current_params, field, value)
 
     changeset = Accounts.change_user_registration(%User{}, updated_params)
