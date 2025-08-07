@@ -263,7 +263,12 @@ defmodule JaviWeb.Home.TitleDetailLive do
                        rating: rating_int
                      }) do
                   {:ok, _user_title} ->
-                    {:noreply, assign(socket, user_rating: rating_int)}
+                    socket =
+                      socket
+                      |> assign(:user_rating, rating_int)
+                      |> assign(:is_in_watched, true)
+
+                    {:noreply, socket}
 
                   {:error, _} ->
                     {:noreply, socket}
@@ -302,8 +307,8 @@ defmodule JaviWeb.Home.TitleDetailLive do
             socket =
               socket
               |> assign(:is_in_watched, true)
-              # Reset rating when adding to watched
-              |> assign(:user_rating, nil)
+              # Get the updated user rating after adding to watched
+              |> assign(:user_rating, get_user_rating(user, title))
 
             {:noreply, socket}
 
