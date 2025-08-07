@@ -1,0 +1,179 @@
+/* Onboarding Page Animations and Styles */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
+
+.animate-slide-up.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animate-slide-up.delay-400 {
+  animation-delay: 0.4s;
+}
+
+.animate-pulse {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 4s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-slow-delayed {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce 2.5s infinite;
+}
+
+.floating-object-top-left {
+  position: absolute;
+  top: 4%;
+  left: 1%;
+}
+
+.floating-object-top-right {
+  position: absolute;
+  top: 3%;
+  right: 1%;
+}
+
+.bouncing-object-bottom-left {
+  position: absolute;
+  bottom: 8%;
+  left: 1%;
+}
+
+.spinning-object-top-center {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.pulsing-object-bottom-right {
+  position: absolute;
+  bottom: 6%;
+  right: 1%;
+}
+
+.floating-object-middle-right {
+  position: absolute;
+  top: 45%;
+  right: 3%;
+  transform: translateY(-50%);
+}
+
+.new-object-top-middle-left {
+  position: absolute;
+  top: 7%;
+  left: 6%;
+}
+
+.new-object-bottom-middle {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.new-object-top-left-corner {
+  position: absolute;
+  top: 4%;
+  left: 2%;
+}
+
+.new-object-top-right-corner {
+  position: absolute;
+  top: 3%;
+  right: 2%;
+}
+
+.new-object-middle-left {
+  position: absolute;
+  top: 20%;
+  left: 5%;
+}
+
+.new-object-middle-top {
+  position: absolute;
+  top: 3%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.new-object-bottom-left-corner {
+  position: absolute;
+  bottom: 10%;
+  left: 2%;
+}
+
+.new-object-bottom-right-corner {
+  position: absolute;
+  bottom: 8%;
+  right: 2%;
+}
+
+.new-object-far-left-middle {
+  position: absolute;
+  top: 40%;
+  left: 1%;
+  transform: translateY(-50%);
+}
+
+.new-object-far-right-middle {
+  position: absolute;
+  top: 60%;
+  right: 1%;
+  transform: translateY(-50%);
+}
+
+.delay-1000 {
+  animation-delay: 1s;
+}
+
+.delay-2000 {
+  animation-delay: 2s;
+} 

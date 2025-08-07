@@ -77,6 +77,11 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+// Import page-specific scripts
+import "./onboarding.js";
+import "./landing.js";
+import "./profile.js";
+
 // Poster carousel functionality
 function initPosterCarousels() {
   const carousels = document.querySelectorAll('.poster-carousel');

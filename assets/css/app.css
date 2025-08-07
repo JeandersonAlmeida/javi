@@ -4,6 +4,10 @@
 
 /* This file is for your main application CSS */
 
+/* Import page-specific styles */
+@import "./onboarding.css";
+@import "./landing.css";
+
 /* Flash message animations */
 @keyframes slideInFromTop {
   0% {
