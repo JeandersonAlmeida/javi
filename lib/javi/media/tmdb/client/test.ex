@@ -84,37 +84,7 @@ defmodule Javi.Media.TMDB.Client.Test do
 
   @impl Javi.Media.TMDB.Client
   def get_trending_movies(_time_window \\ "day") do
-    {:ok,
-     %{
-       "results" => [
-         %{
-           "id" => 1,
-           "title" => "Test Movie 1",
-           "overview" => "A test movie",
-           "poster_path" => "/test1.jpg",
-           "release_date" => "2023-01-01",
-           "vote_average" => 8.5,
-           "vote_count" => 1000,
-           "popularity" => 100.0,
-           "adult" => false,
-           "genre_ids" => [28, 12],
-           "media_type" => "movie"
-         },
-         %{
-           "id" => 2,
-           "title" => "Test Movie 2",
-           "overview" => "Another test movie",
-           "poster_path" => "/test2.jpg",
-           "release_date" => "2023-02-01",
-           "vote_average" => 7.8,
-           "vote_count" => 800,
-           "popularity" => 90.0,
-           "adult" => false,
-           "genre_ids" => [16, 35],
-           "media_type" => "movie"
-         }
-       ]
-     }}
+    {:ok, %{"results" => []}}
   end
 
   @impl Javi.Media.TMDB.Client
@@ -217,30 +187,7 @@ defmodule Javi.Media.TMDB.Client.Test do
 
   @impl Javi.Media.TMDB.Client
   def get_movie_genres do
-    {:ok,
-     %{
-       "genres" => [
-         %{"id" => 28, "name" => "Action"},
-         %{"id" => 12, "name" => "Adventure"},
-         %{"id" => 16, "name" => "Animation"},
-         %{"id" => 35, "name" => "Comedy"},
-         %{"id" => 80, "name" => "Crime"},
-         %{"id" => 99, "name" => "Documentary"},
-         %{"id" => 18, "name" => "Drama"},
-         %{"id" => 10751, "name" => "Family"},
-         %{"id" => 14, "name" => "Fantasy"},
-         %{"id" => 36, "name" => "History"},
-         %{"id" => 27, "name" => "Horror"},
-         %{"id" => 10402, "name" => "Music"},
-         %{"id" => 9648, "name" => "Mystery"},
-         %{"id" => 10749, "name" => "Romance"},
-         %{"id" => 878, "name" => "Science Fiction"},
-         %{"id" => 10770, "name" => "TV Movie"},
-         %{"id" => 53, "name" => "Thriller"},
-         %{"id" => 10752, "name" => "War"},
-         %{"id" => 37, "name" => "Western"}
-       ]
-     }}
+    {:ok, %{"genres" => []}}
   end
 
   @impl Javi.Media.TMDB.Client
