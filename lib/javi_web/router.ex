@@ -17,27 +17,10 @@ defmodule JaviWeb.Router do
     plug :accepts, ["json"]
   end
 
-  pipeline :pwa do
-    plug :accepts, ["html", "json", "js"]
-    plug :fetch_session
-    plug :fetch_live_flash
-    plug :put_root_layout, html: {JaviWeb.Layouts, :root}
-    plug :put_secure_browser_headers
-    plug :fetch_current_user
-  end
-
   scope "/", JaviWeb do
     pipe_through :browser
 
-    get "/", LandingController, :index
-  end
-
-  scope "/", JaviWeb do
-    pipe_through :pwa
-
-    get "/manifest.json", PWAController, :manifest
-    get "/sw.js", PWAController, :service_worker
-    get "/pwa.js", PWAController, :pwa_script
+    live "/", Landing.LandingLive, :index
   end
 
   # Other scopes may use custom stacks.
