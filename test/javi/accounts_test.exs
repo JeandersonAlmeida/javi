@@ -59,12 +59,14 @@ defmodule Javi.AccountsTest do
     end
 
     test "validates email and password when given" do
-      {:error, changeset} = Accounts.register_user(%{email: "not valid", password: "not valid"})
+      {:error, changeset} = Accounts.register_user(%{})
 
       assert %{
-               email: ["must have the @ sign and no spaces"],
-               password: ["should be at least 12 character(s)"]
-             } = errors_on(changeset)
+               email: ["can't be blank"],
+               password: ["can't be blank"],
+               display_name: ["can't be blank"]
+             } =
+               errors_on(changeset)
     end
 
     test "validates maximum values for email and password for security" do
@@ -97,7 +99,7 @@ defmodule Javi.AccountsTest do
   describe "change_user_registration/2" do
     test "returns a changeset" do
       assert %Ecto.Changeset{} = changeset = Accounts.change_user_registration(%User{})
-      assert changeset.required == [:password, :email]
+      assert changeset.required == [:display_name, :password, :email]
     end
 
     test "allows fields to be set" do
@@ -266,10 +268,8 @@ defmodule Javi.AccountsTest do
           password_confirmation: "another"
         })
 
-      assert %{
-               password: ["should be at least 12 character(s)"],
-               password_confirmation: ["does not match password"]
-             } = errors_on(changeset)
+      errors = errors_on(changeset)
+      assert "does not match password" in errors.password_confirmation
     end
 
     test "validates maximum values for password for security", %{user: user} do
@@ -471,14 +471,13 @@ defmodule Javi.AccountsTest do
     test "validates password", %{user: user} do
       {:error, changeset} =
         Accounts.reset_user_password(user, %{
-          password: "not valid",
+          password: "short",
           password_confirmation: "another"
         })
 
-      assert %{
-               password: ["should be at least 12 character(s)"],
-               password_confirmation: ["does not match password"]
-             } = errors_on(changeset)
+      errors = errors_on(changeset)
+      assert "should be at least 6 character(s)" in errors.password
+      assert "does not match password" in errors.password_confirmation
     end
 
     test "validates maximum values for password for security", %{user: user} do

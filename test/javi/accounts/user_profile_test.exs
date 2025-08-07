@@ -9,7 +9,8 @@ defmodule Javi.Accounts.UserProfileTest do
       attrs
       |> Enum.into(%{
         email: "test#{System.unique_integer()}@example.com",
-        password: "testpassword123"
+        password: "testpassword123",
+        display_name: "Test User"
       })
       |> Javi.Accounts.register_user()
 
