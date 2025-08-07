@@ -33,7 +33,7 @@ defmodule JaviWeb.Home.ProfileLive do
 
   @impl true
   def handle_event("logout", _params, socket) do
-    {:noreply, redirect(socket, to: ~p"/sair")}
+    {:noreply, push_event(socket, "logout", %{})}
   end
 
   # Private functions

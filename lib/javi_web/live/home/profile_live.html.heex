@@ -234,4 +234,31 @@
       });
     }
   });
+
+  // Handle logout event from LiveView
+  window.addEventListener('phx:logout', function() {
+    // Create a form to submit the DELETE request
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/sair';
+    
+    // Add the CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_csrf_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    // Add the _method field to make it a DELETE request
+    const methodInput = document.createElement('input');
+    methodInput.type = 'hidden';
+    methodInput.name = '_method';
+    methodInput.value = 'DELETE';
+    form.appendChild(methodInput);
+    
+    // Submit the form
+    document.body.appendChild(form);
+    form.submit();
+  });
 </script>

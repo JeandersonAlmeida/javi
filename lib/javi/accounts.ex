@@ -695,7 +695,7 @@ defmodule Javi.Accounts do
     end
   end
 
-  def remove_title_from_list(%List{} = list, list_item_id) when is_binary(list_item_id) do
+  def remove_title_from_list(%List{} = list, list_item_id) when is_integer(list_item_id) do
     case Repo.get_by(ListItem, id: list_item_id, list_id: list.id) do
       nil ->
         {:error, :not_found}
@@ -770,6 +770,10 @@ defmodule Javi.Accounts do
     List
     |> where([l], l.user_id == ^user.id and l.list_type == "watched")
     |> preload(list_items: :title)
-    |> Repo.one()
+    |> Repo.all()
+    |> case do
+      [] -> nil
+      [first | _] -> first
+    end
   end
 end
