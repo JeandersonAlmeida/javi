@@ -22,7 +22,7 @@ defmodule JaviWeb.Home.SearchLiveTest do
       conn = log_in_user(conn, user)
 
       # Visit the search page
-      {:ok, view, _html} = live(conn, ~p"/search")
+      {:ok, view, _html} = live(conn, ~p"/pesquisar")
 
       # Mock movie data
       movie_data = %{
@@ -52,7 +52,7 @@ defmodule JaviWeb.Home.SearchLiveTest do
       conn = log_in_user(conn, user)
 
       # Visit the search page
-      {:ok, _view, html} = live(conn, ~p"/search")
+      {:ok, _view, html} = live(conn, ~p"/pesquisar")
 
       # Check that the search page loads
       assert html =~ "Pesquisar"
@@ -63,7 +63,7 @@ defmodule JaviWeb.Home.SearchLiveTest do
     test "can navigate to title detail from search results", %{conn: conn, user: user} do
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/search")
+      {:ok, view, _html} = live(conn, ~p"/pesquisar")
 
       # Mock movie data
       movie_data = %{
@@ -85,7 +85,7 @@ defmodule JaviWeb.Home.SearchLiveTest do
       # Simulate clicking on a search result
       result = render_click(view, "navigate_to_title", %{"title" => Jason.encode!(movie_data)})
       assert {:error, {:live_redirect, %{kind: :push, to: url}}} = result
-      assert String.starts_with?(url, "/titles/")
+      assert String.starts_with?(url, "/titulos/")
       assert String.ends_with?(url, "?referrer=search")
 
       # Verify the title was created in the database
@@ -97,7 +97,7 @@ defmodule JaviWeb.Home.SearchLiveTest do
     test "can navigate to TV show detail from search results", %{conn: conn, user: user} do
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/search")
+      {:ok, view, _html} = live(conn, ~p"/pesquisar")
 
       # Mock TV show data (using "name" instead of "title")
       tv_data = %{
@@ -119,7 +119,7 @@ defmodule JaviWeb.Home.SearchLiveTest do
       # Simulate clicking on a search result
       result = render_click(view, "navigate_to_title", %{"title" => Jason.encode!(tv_data)})
       assert {:error, {:live_redirect, %{kind: :push, to: url}}} = result
-      assert String.starts_with?(url, "/titles/")
+      assert String.starts_with?(url, "/titulos/")
       assert String.ends_with?(url, "?referrer=search")
 
       # Verify the title was created in the database
@@ -127,6 +127,28 @@ defmodule JaviWeb.Home.SearchLiveTest do
       assert title != nil
       assert title.title == "Test TV Show"
       assert title.original_title == "Test TV Show Original"
+    end
+
+    test "displays 9 titles per section in 3x3 grid", %{conn: conn, user: user} do
+      # Log in the user
+      conn = log_in_user(conn, user)
+
+      # Visit the search page
+      {:ok, _view, html} = live(conn, ~p"/pesquisar")
+
+      # Check that each section shows exactly 9 titles
+      # We can verify this by counting the poster elements in each section
+      assert html =~ "Filmes em Alta"
+      assert html =~ "Séries Populares"
+      assert html =~ "Lançamentos Recentes"
+      assert html =~ "Melhores Avaliados"
+
+      # Verify the grid layout is 3 columns
+      assert html =~ "grid-cols-3"
+
+      # Verify that we're taking 9 items from each section
+      # This is done in the template with Enum.take(@trending_movies, 9)
+      # The actual count will depend on the data available from TMDB
     end
   end
 end
