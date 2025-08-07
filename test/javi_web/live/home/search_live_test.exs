@@ -3,6 +3,8 @@ defmodule JaviWeb.Home.SearchLiveTest do
 
   import Phoenix.LiveViewTest
   import Javi.AccountsFixtures
+  import Javi.MediaFixtures
+  import Floki
 
   alias Javi.Accounts
   alias Javi.Media
@@ -14,6 +16,68 @@ defmodule JaviWeb.Home.SearchLiveTest do
 
   setup do
     %{user: user_fixture(@create_user_attrs)}
+  end
+
+  describe "Search page rendering" do
+    test "renders search page with search interface", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, _view, html} = live(conn, ~p"/pesquisar")
+
+      assert {:ok, document} = Floki.parse_document(html)
+
+      # Check for search page elements
+      assert Floki.find(document, "h1") |> Floki.text() =~ "Pesquisar"
+      assert Floki.find(document, "[data-testid=search-input]")
+      assert Floki.find(document, "[data-testid=search-button]")
+    end
+
+    test "renders trending movies section", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, _view, html} = live(conn, ~p"/pesquisar")
+
+      assert {:ok, document} = Floki.parse_document(html)
+
+      # Check trending movies section
+      assert Floki.find(document, "[data-testid=trending-movies]")
+
+      assert Floki.find(document, "[data-testid=trending-movies]") |> Floki.text() =~
+               "Filmes em Alta"
+    end
+
+    test "renders popular TV shows section", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, _view, html} = live(conn, ~p"/pesquisar")
+
+      assert {:ok, document} = Floki.parse_document(html)
+
+      # Check popular TV shows section
+      assert Floki.find(document, "[data-testid=popular-tv-shows]")
+
+      assert Floki.find(document, "[data-testid=popular-tv-shows]") |> Floki.text() =~
+               "Séries Populares"
+    end
+
+    test "renders search results when available", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, _view, html} = live(conn, ~p"/pesquisar")
+
+      assert {:ok, document} = Floki.parse_document(html)
+
+      # Check search results container
+      assert Floki.find(document, "[data-testid=search-results]")
+    end
+
+    test "renders navigation buttons", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, _view, html} = live(conn, ~p"/pesquisar")
+
+      assert {:ok, document} = Floki.parse_document(html)
+
+      # Check navigation buttons
+      assert Floki.find(document, "[data-testid=home-button]")
+      assert Floki.find(document, "[data-testid=lists-button]")
+      assert Floki.find(document, "[data-testid=profile-button]")
+    end
   end
 
   describe "Search functionality" do
@@ -37,8 +101,8 @@ defmodule JaviWeb.Home.SearchLiveTest do
       }
 
       # Simulate adding movie to watched list
-      assert render_click(view, "add_to_watched", %{"title" => Jason.encode!(movie_data)}) =~
-               "Pesquisar"
+      result = render_click(view, "add_to_watched", %{"title" => Jason.encode!(movie_data)})
+      assert result =~ "Pesquisar"
 
       # Verify the movie was added to the watched list
       watched_list = Accounts.get_user_watched_list(user)
@@ -54,10 +118,16 @@ defmodule JaviWeb.Home.SearchLiveTest do
       # Visit the search page
       {:ok, _view, html} = live(conn, ~p"/pesquisar")
 
+      assert {:ok, document} = Floki.parse_document(html)
+
       # Check that the search page loads
-      assert html =~ "Pesquisar"
-      assert html =~ "Filmes em Alta"
-      assert html =~ "Séries Populares"
+      assert Floki.find(document, "h1") |> Floki.text() =~ "Pesquisar"
+
+      assert Floki.find(document, "[data-testid=trending-movies]") |> Floki.text() =~
+               "Filmes em Alta"
+
+      assert Floki.find(document, "[data-testid=popular-tv-shows]") |> Floki.text() =~
+               "Séries Populares"
     end
 
     test "can navigate to title detail from search results", %{conn: conn, user: user} do

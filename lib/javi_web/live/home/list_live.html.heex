@@ -161,7 +161,7 @@
           <input
             type="text"
             name="name"
-            value={@list_form["name"]}
+            value={@list_form.name}
             placeholder="Digite o nome da lista"
             class="w-full px-3 py-2 bg-[#303030] text-white border border-[#474747] rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
             required
@@ -174,7 +174,7 @@
           </label>
           <textarea
             name="description"
-            value={@list_form["description"]}
+            value={@list_form.description}
             placeholder="Digite uma descrição para a lista (opcional)"
             rows="3"
             class="w-full px-3 py-2 bg-[#303030] text-white border border-[#474747] rounded-lg focus:outline-none focus:border-blue-500 transition-colors resize-none"
@@ -226,7 +226,7 @@
           <input
             type="text"
             name="name"
-            value={@edit_form["name"]}
+            value={@edit_form.name}
             placeholder="Digite o nome da lista"
             class="w-full px-3 py-2 bg-[#303030] text-white border border-[#474747] rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
             required
@@ -239,7 +239,7 @@
           </label>
           <textarea
             name="description"
-            value={@edit_form["description"]}
+            value={@edit_form.description}
             placeholder="Digite uma descrição para a lista (opcional)"
             rows="3"
             class="w-full px-3 py-2 bg-[#303030] text-white border border-[#474747] rounded-lg focus:outline-none focus:border-blue-500 transition-colors resize-none"

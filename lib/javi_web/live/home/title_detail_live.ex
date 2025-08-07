@@ -115,6 +115,89 @@ defmodule JaviWeb.Home.TitleDetailLive do
   end
 
   @impl true
+  def handle_event("navigate_back", _params, socket) do
+    referrer = socket.assigns.referrer || "search"
+
+    case referrer do
+      "search" -> {:noreply, push_navigate(socket, to: ~p"/pesquisar")}
+      "lists" -> {:noreply, push_navigate(socket, to: ~p"/listas")}
+      "dashboard" -> {:noreply, push_navigate(socket, to: ~p"/inicio")}
+      _ -> {:noreply, push_navigate(socket, to: ~p"/pesquisar")}
+    end
+  end
+
+  @impl true
+  def handle_event("navigate_to_search", _params, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/pesquisar")}
+  end
+
+  @impl true
+  def handle_event("add_to_watched", _params, socket) do
+    user = socket.assigns.user
+    title = socket.assigns.title
+
+    case user do
+      nil ->
+        {:noreply, socket}
+
+      _user ->
+        watched_list = Javi.Accounts.get_user_watched_list(user)
+
+        case Javi.Accounts.add_title_to_list(watched_list, title) do
+          {:ok, _list_item} ->
+            {:noreply, put_flash(socket, :info, "Adicionado à lista de assistidos")}
+
+          {:error, _} ->
+            {:noreply, put_flash(socket, :error, "Erro ao adicionar à lista de assistidos")}
+        end
+    end
+  end
+
+  @impl true
+  def handle_event("add_to_watching", _params, socket) do
+    user = socket.assigns.user
+    title = socket.assigns.title
+
+    case user do
+      nil ->
+        {:noreply, socket}
+
+      _user ->
+        watching_list = Javi.Accounts.get_user_watching_list(user)
+
+        case Javi.Accounts.add_title_to_list(watching_list, title) do
+          {:ok, _list_item} ->
+            {:noreply, put_flash(socket, :info, "Adicionado à lista de assistindo")}
+
+          {:error, _} ->
+            {:noreply, put_flash(socket, :error, "Erro ao adicionar à lista de assistindo")}
+        end
+    end
+  end
+
+  @impl true
+  def handle_event("add_to_favorites", _params, socket) do
+    user = socket.assigns.user
+    title = socket.assigns.title
+
+    case user do
+      nil ->
+        {:noreply, socket}
+
+      _user ->
+        favorites_list = Javi.Accounts.get_user_favorites_list(user)
+
+        case Javi.Accounts.add_title_to_list(favorites_list, title) do
+          {:ok, _list_item} ->
+            {:noreply, put_flash(socket, :info, "Adicionado aos favoritos")}
+
+          {:error, _} ->
+            {:noreply, put_flash(socket, :error, "Erro ao adicionar aos favoritos")}
+        end
+    end
+  end
+
+  @impl true
   def handle_event("show_add_to_lists_modal", %{"title" => title_data}, socket) do
     case Jason.decode(title_data) do
       {:ok, parsed_title_data} ->

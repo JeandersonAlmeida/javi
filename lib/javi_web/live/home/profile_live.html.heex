@@ -12,21 +12,21 @@
 <!-- User Dropdown Menu -->
     <div class="relative">
       <button
-        id="user-dropdown-button"
+        phx-click="toggle_dropdown"
         class="flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 bg-[#303030] text-white rounded-lg text-sm lg:text-base font-medium hover:bg-[#404040] transition-colors"
       >
-        <span>Menu</span>
-        <.icon name="hero-chevron-down" class="w-4 h-4" />
+        <.icon name="hero-bars-3" class="w-5 h-5" />
       </button>
       
 <!-- Dropdown Menu -->
       <div
-        id="user-dropdown-menu"
-        class="hidden absolute right-0 top-full mt-2 w-48 bg-[#212121] rounded-lg shadow-lg border border-[#303030] z-50"
+        phx-click-away="close_dropdown"
+        class={"absolute right-0 top-full mt-2 w-48 bg-[#212121] rounded-lg shadow-lg border border-[#303030] z-50 #{if @dropdown_open, do: "", else: "hidden"}"}
       >
         <div class="py-2">
           <.link
             navigate={~p"/configuracoes"}
+            phx-click="close_dropdown"
             class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-[#303030] transition-colors"
           >
             <.icon name="hero-user" class="w-4 h-4" />
@@ -35,6 +35,7 @@
 
           <.link
             href="/terms"
+            phx-click="close_dropdown"
             class="flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-[#303030] transition-colors"
           >
             <.icon name="hero-document-text" class="w-4 h-4" />

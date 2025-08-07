@@ -128,13 +128,13 @@ defmodule JaviWeb.Home.ListLive do
   end
 
   @impl true
-  def handle_event("validate_edit_list", %{"name" => name, "description" => description}, socket) do
-    {:noreply, assign(socket, edit_form: %{name: name, description: description})}
+  def handle_event("validate_list", _params, socket) do
+    {:noreply, socket}
   end
 
   @impl true
-  def handle_event("validate_list", _params, socket) do
-    {:noreply, socket}
+  def handle_event("validate_edit_list", %{"name" => name, "description" => description}, socket) do
+    {:noreply, assign(socket, edit_form: %{name: name, description: description})}
   end
 
   @impl true
@@ -177,8 +177,15 @@ defmodule JaviWeb.Home.ListLive do
          |> assign(:list_form, %{name: "", description: ""})}
 
       {:error, _changeset} ->
-        {:noreply, socket}
+        # Keep the form values so user can see what they entered and fix the error
+        {:noreply, assign(socket, list_form: %{name: name, description: description})}
     end
+  end
+
+  @impl true
+  def handle_event("create_list", _params, socket) do
+    # Handle case where parameters might be missing or malformed
+    {:noreply, socket}
   end
 
   @impl true
@@ -218,12 +225,6 @@ defmodule JaviWeb.Home.ListLive do
             {:noreply, socket}
         end
     end
-  end
-
-  @impl true
-  def handle_event("create_list", _params, socket) do
-    # Handle case where parameters might be missing or malformed
-    {:noreply, socket}
   end
 
   @impl true
