@@ -82,6 +82,7 @@ defmodule JaviWeb.Router do
     pipe_through [:browser]
 
     delete "/sair", UserSessionController, :delete
+    get "/sair", UserSessionController, :logout
 
     live_session :current_user,
       on_mount: [{JaviWeb.UserAuth, :mount_current_user}] do
