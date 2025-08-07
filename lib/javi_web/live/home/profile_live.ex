@@ -22,7 +22,8 @@ defmodule JaviWeb.Home.ProfileLive do
        user: user,
        user_stats: user_stats,
        recent_watched: recent_watched,
-       current_page: :profile
+       current_page: :profile,
+       dropdown_open: false
      )}
   end
 
@@ -34,6 +35,16 @@ defmodule JaviWeb.Home.ProfileLive do
   @impl true
   def handle_event("logout", _params, socket) do
     {:noreply, push_event(socket, "logout", %{})}
+  end
+
+  @impl true
+  def handle_event("toggle_dropdown", _params, socket) do
+    {:noreply, assign(socket, dropdown_open: !socket.assigns.dropdown_open)}
+  end
+
+  @impl true
+  def handle_event("close_dropdown", _params, socket) do
+    {:noreply, assign(socket, dropdown_open: false)}
   end
 
   # Private functions

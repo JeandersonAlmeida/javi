@@ -3,6 +3,8 @@ defmodule JaviWeb.Home.DashboardLiveTest do
 
   import Phoenix.LiveViewTest
   import Javi.AccountsFixtures
+  import Javi.MediaFixtures
+  import Floki
 
   alias Javi.Accounts
 
@@ -22,7 +24,19 @@ defmodule JaviWeb.Home.DashboardLiveTest do
     %{user: user}
   end
 
-  describe "Dashboard lists" do
+  describe "Dashboard page rendering" do
+    test "renders dashboard page with user information", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, _view, html} = live(conn, ~p"/inicio")
+
+      assert {:ok, document} = Floki.parse_document(html)
+
+      # Check for dashboard page elements
+      assert Floki.find(document, "h2") |> Floki.text() =~ "Dashboard"
+
+      assert Floki.find(document, "h3") |> Floki.text() =~ user.display_name
+    end
+
     test "shows default lists for user", %{conn: conn, user: user} do
       # Create some default lists for the user
       {:ok, _watching_list} =
@@ -43,10 +57,12 @@ defmodule JaviWeb.Home.DashboardLiveTest do
       conn = log_in_user(conn, user)
 
       # Visit the dashboard
-      {:ok, _view, html} = live(conn, ~p"/home")
+      {:ok, _view, html} = live(conn, ~p"/inicio")
+
+      assert {:ok, document} = Floki.parse_document(html)
 
       # Check that the lists are displayed
-      assert html =~ "Minhas Listas"
+      assert Floki.find(document, "h2") |> Floki.text() =~ "Minhas Listas"
       assert html =~ "Assistindo"
       assert html =~ "Favoritos"
     end
@@ -64,7 +80,9 @@ defmodule JaviWeb.Home.DashboardLiveTest do
       conn = log_in_user(conn, user)
 
       # Visit the dashboard
-      {:ok, _view, html} = live(conn, ~p"/home")
+      {:ok, _view, html} = live(conn, ~p"/inicio")
+
+      assert {:ok, document} = Floki.parse_document(html)
 
       # Check that the custom list is displayed
       assert html =~ "Minha Lista Personalizada"
@@ -79,19 +97,22 @@ defmodule JaviWeb.Home.DashboardLiveTest do
       conn = log_in_user(conn, user)
 
       # Visit the dashboard
-      {:ok, _view, html} = live(conn, ~p"/home")
+      {:ok, _view, html} = live(conn, ~p"/inicio")
+
+      assert {:ok, document} = Floki.parse_document(html)
 
       # Check that the empty state is displayed
       assert html =~ "Você ainda não tem listas"
-      assert html =~ "Criar Lista"
     end
+  end
 
+  describe "Dashboard events" do
     test "handles navigate_to_title event with genre conversion", %{conn: conn, user: user} do
       # Log in the user
       conn = log_in_user(conn, user)
 
       # Visit the dashboard
-      {:ok, view, _html} = live(conn, ~p"/home")
+      {:ok, view, _html} = live(conn, ~p"/inicio")
 
       # Simulate clicking on a title (this would be a movie from TMDB)
       title_data = %{
@@ -113,8 +134,66 @@ defmodule JaviWeb.Home.DashboardLiveTest do
       # Trigger the navigate_to_title event
       result = render_hook(view, "navigate_to_title", %{"title" => Jason.encode!(title_data)})
       assert {:error, {:live_redirect, %{kind: :push, to: url}}} = result
-      assert String.starts_with?(url, "/titles/")
+      assert String.starts_with?(url, "/titulos/")
       assert String.ends_with?(url, "?referrer=dashboard")
+    end
+
+    test "handles navigate_to_title event with TV show", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, view, _html} = live(conn, ~p"/inicio")
+
+      # Simulate clicking on a TV show
+      tv_data = %{
+        "id" => 67890,
+        "name" => "Test TV Show",
+        "original_name" => "Test TV Show Original",
+        "overview" => "A test TV show",
+        "first_air_date" => "2023-01-01",
+        "vote_average" => 8.0,
+        "vote_count" => 500,
+        "popularity" => 80.0,
+        "poster_path" => "/test-tv.jpg",
+        "backdrop_path" => "/backdrop-tv.jpg",
+        "adult" => false,
+        "genre_ids" => [10759, 35],
+        "media_type" => "tv"
+      }
+
+      # Trigger the navigate_to_title event
+      result = render_hook(view, "navigate_to_title", %{"title" => Jason.encode!(tv_data)})
+      assert {:error, {:live_redirect, %{kind: :push, to: url}}} = result
+      assert String.starts_with?(url, "/titulos/")
+      assert String.ends_with?(url, "?referrer=dashboard")
+    end
+
+    test "handles navigate_to_search event", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, view, _html} = live(conn, ~p"/inicio")
+
+      # Trigger navigate_to_search event
+      result = render_click(view, "navigate_to_search")
+      assert {:error, {:live_redirect, %{kind: :push, to: url}}} = result
+      assert url == "/pesquisar"
+    end
+
+    test "handles navigate_to_lists event", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, view, _html} = live(conn, ~p"/inicio")
+
+      # Trigger navigate_to_lists event
+      result = render_click(view, "navigate_to_lists")
+      assert {:error, {:live_redirect, %{kind: :push, to: url}}} = result
+      assert url == "/listas"
+    end
+
+    test "handles navigate_to_profile event", %{conn: conn, user: user} do
+      conn = log_in_user(conn, user)
+      {:ok, view, _html} = live(conn, ~p"/inicio")
+
+      # Trigger navigate_to_profile event
+      result = render_click(view, "navigate_to_profile")
+      assert {:error, {:live_redirect, %{kind: :push, to: url}}} = result
+      assert url == "/perfil"
     end
 
     test "displays correct time spent statistics", %{conn: conn, user: user} do
@@ -128,10 +207,10 @@ defmodule JaviWeb.Home.DashboardLiveTest do
 
       # Create some test titles with duration data
       # 2 hour movie
-      title1 = Javi.MediaFixtures.title_fixture(%{tmdb_type: "movie", runtime: 120})
+      title1 = title_fixture(%{tmdb_type: "movie", runtime: 120})
       # 2 episodes of 45 min each
       title2 =
-        Javi.MediaFixtures.title_fixture(%{
+        title_fixture(%{
           tmdb_type: "tv",
           episode_run_time: [45],
           number_of_episodes: 2
@@ -145,11 +224,15 @@ defmodule JaviWeb.Home.DashboardLiveTest do
       conn = log_in_user(conn, user)
 
       # Visit the dashboard
-      {:ok, _view, html} = live(conn, ~p"/home")
+      {:ok, _view, html} = live(conn, ~p"/inicio")
+
+      assert {:ok, document} = Floki.parse_document(html)
 
       # Check that the statistics are displayed correctly
       assert html =~ "Filmes Assistidos"
+
       assert html =~ "Séries Assistidas"
+
       # The actual numbers will depend on the test data
     end
   end

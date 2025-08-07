@@ -10,10 +10,18 @@ defmodule Javi.MediaFixtures do
   Generate a title.
   """
   def title_fixture(attrs \\ %{}) do
+    # Generate a unique tmdb_id to avoid constraint violations (using smaller range for database compatibility)
+    unique_id =
+      :crypto.strong_rand_bytes(2)
+      |> Base.encode16(case: :lower)
+      |> binary_part(0, 4)
+      |> String.to_integer(16)
+      |> Kernel.+(1000)
+
     {:ok, title} =
       attrs
       |> Enum.into(%{
-        tmdb_id: 123,
+        tmdb_id: unique_id,
         tmdb_type: "movie",
         title: "Test Movie",
         original_title: "Test Movie",

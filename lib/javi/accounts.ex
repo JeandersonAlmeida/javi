@@ -776,4 +776,24 @@ defmodule Javi.Accounts do
       [first | _] -> first
     end
   end
+
+  @doc """
+  Gets a user's watching list.
+  """
+  def get_user_watching_list(%User{} = user) do
+    List
+    |> where([l], l.user_id == ^user.id and l.list_type == "watching")
+    |> preload(list_items: :title)
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets a user's favorites list.
+  """
+  def get_user_favorites_list(%User{} = user) do
+    List
+    |> where([l], l.user_id == ^user.id and l.list_type == "favorites")
+    |> preload(list_items: :title)
+    |> Repo.one()
+  end
 end

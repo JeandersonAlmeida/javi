@@ -316,7 +316,11 @@ defmodule JaviWeb.Home.UserSettingsLive do
     %{
       follower_notifications: user.follower_notifications || false,
       share_lists: user.share_lists || false,
-      social_recommendations: user.social_recommendations || false
+      social_recommendations: user.social_recommendations || false,
+      email_notifications: user.email_notifications || false,
+      new_releases_notifications: user.new_releases_notifications || false,
+      weekly_digest: user.weekly_digest || false,
+      adult_content_filter: user.adult_content_filter || false
     }
   end
 

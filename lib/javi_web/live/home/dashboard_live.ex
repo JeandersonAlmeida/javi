@@ -90,6 +90,16 @@ defmodule JaviWeb.Home.DashboardLive do
   end
 
   @impl true
+  def handle_event("navigate_to_search", _params, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/pesquisar")}
+  end
+
+  @impl true
+  def handle_event("navigate_to_profile", _params, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/perfil")}
+  end
+
+  @impl true
   def handle_event("navigate_to_title", %{"title" => title_data}, socket) do
     case Jason.decode(title_data) do
       {:ok, movie_data} ->
