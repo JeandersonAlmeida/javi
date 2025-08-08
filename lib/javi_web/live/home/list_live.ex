@@ -3,6 +3,7 @@ defmodule JaviWeb.Home.ListLive do
 
   alias Javi.Accounts
   import JaviWeb.Components.BottomNavigation
+  import JaviWeb.Components.Header
 
   @impl true
   def mount(_params, _session, socket) do

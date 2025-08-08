@@ -5,6 +5,7 @@ defmodule JaviWeb.Home.DashboardLive do
   alias Javi.Media
   alias Javi.Accounts
   import JaviWeb.Components.BottomNavigation
+  import JaviWeb.Components.Header
 
   @impl true
   def mount(_params, session, socket) do

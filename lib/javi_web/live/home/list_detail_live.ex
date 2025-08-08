@@ -5,6 +5,7 @@ defmodule JaviWeb.Home.ListDetailLive do
   alias Javi.Media.TMDB.Client, as: TMDBClient
   alias Javi.Accounts
   import JaviWeb.Components.BottomNavigation
+  import JaviWeb.Components.Header
 
   @impl true
   def mount(%{"id" => list_id}, session, socket) do

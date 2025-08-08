@@ -3,53 +3,41 @@
   style='font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;'
 >
   <!-- Fixed Header with Search -->
-  <div class="fixed top-0 left-0 right-0 z-50 bg-[#141414]">
-    <div class="flex items-center bg-[#141414] p-4 pb-2 justify-between">
-      <button
-        phx-click="go_back"
-        class="text-white flex size-12 shrink-0 items-center"
-        data-icon="ArrowLeft"
-        data-size="24px"
-        data-weight="regular"
-      >
-        <.icon name="hero-arrow-left" class="w-6 h-6" />
-      </button>
-      <h2 class="text-white text-lg lg:text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">
-        Pesquisar
-      </h2>
-    </div>
-    <div class="px-4 lg:px-8 py-3 lg:py-4 max-w-4xl mx-auto">
-      <.form for={%{}} phx-submit="search" class="flex flex-col min-w-40 h-12 lg:h-14 w-full">
-        <div class="flex w-full flex-1 items-stretch rounded-xl h-full">
-          <div
-            class="text-[#ababab] flex border-none bg-[#303030] items-center justify-center pl-4 lg:pl-6 rounded-l-xl border-r-0"
-            data-icon="MagnifyingGlass"
-            data-size="24px"
-            data-weight="regular"
-          >
-            <.icon name="hero-magnifying-glass" class="w-6 h-6" />
-          </div>
-          <input
-            name="query"
-            placeholder="Pesquisar filmes e séries..."
-            class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-[#303030] focus:border-none h-full placeholder:text-[#ababab] px-4 lg:px-6 rounded-l-none border-l-0 pl-2 text-base lg:text-lg font-normal leading-normal"
-            value={@query}
-            phx-keyup="search"
-            phx-throttle="300"
-          />
-          <%= if @query != "" do %>
-            <button
-              type="button"
-              phx-click="clear_search"
-              class="text-[#ababab] flex border-none bg-[#303030] items-center justify-center px-4 lg:px-6 rounded-r-xl border-l-0 hover:text-white transition-colors"
+  <.top_header show_back ml_for_sidebar={false} title="Pesquisar">
+    <:bottom>
+      <div class="px-4 lg:px-8 py-3 lg:py-4 max-w-4xl mx-auto">
+        <.form for={%{}} phx-submit="search" class="flex flex-col min-w-40 h-12 lg:h-14 w-full">
+          <div class="flex w-full flex-1 items-stretch rounded-xl h-full">
+            <div
+              class="text-[#ababab] flex border-none bg-[#303030] items-center justify-center pl-4 lg:pl-6 rounded-l-xl border-r-0"
+              data-icon="MagnifyingGlass"
+              data-size="24px"
+              data-weight="regular"
             >
-              <.icon name="hero-x-mark" class="w-5 h-5" />
-            </button>
-          <% end %>
-        </div>
-      </.form>
-    </div>
-  </div>
+              <.icon name="hero-magnifying-glass" class="w-6 h-6" />
+            </div>
+            <input
+              name="query"
+              placeholder="Pesquisar filmes e séries..."
+              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-[#303030] focus:border-none h-full placeholder:text-[#ababab] px-4 lg:px-6 rounded-l-none border-l-0 pl-2 text-base lg:text-lg font-normal leading-normal"
+              value={@query}
+              phx-keyup="search"
+              phx-throttle="300"
+            />
+            <%= if @query != "" do %>
+              <button
+                type="button"
+                phx-click="clear_search"
+                class="text-[#ababab] flex border-none bg-[#303030] items-center justify-center px-4 lg:px-6 rounded-r-xl border-l-0 hover:text-white transition-colors"
+              >
+                <.icon name="hero-x-mark" class="w-5 h-5" />
+              </button>
+            <% end %>
+          </div>
+        </.form>
+      </div>
+    </:bottom>
+  </.top_header>
   
 <!-- Scrollable Content Area with Top Padding -->
   <div class="flex-1 overflow-y-auto pt-28 lg:pt-32 pb-24">

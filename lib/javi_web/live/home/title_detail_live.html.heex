@@ -2,22 +2,7 @@
   class="relative flex size-full min-h-screen flex-col bg-[#141414] dark justify-between group/design-root overflow-x-hidden lg:ml-64"
   style='font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;'
 >
-  <!-- Header -->
-  <div class="fixed top-0 left-0 right-0 z-50 flex items-center bg-[#141414] p-4 pb-2 justify-between lg:ml-64 border-b border-[#303030]">
-    <button
-      class="text-white flex size-12 shrink-0 items-center"
-      phx-click="go_back"
-      data-icon="ArrowLeft"
-      data-size="24px"
-      data-weight="regular"
-    >
-      <.icon name="hero-arrow-left" class="w-6 h-6" />
-    </button>
-    <h2 class="text-white text-lg lg:text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center">
-      Detalhes
-    </h2>
-    <div class="w-12"></div>
-  </div>
+  <.top_header show_back title="Detalhes" />
 
   <div class="flex-1 overflow-y-auto pb-24 pt-20">
     <%= if @title do %>

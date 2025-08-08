@@ -3,6 +3,7 @@ defmodule JaviWeb.Home.UserSettingsLive do
 
   alias Javi.Accounts
   alias Javi.Repo
+  import JaviWeb.Components.Header
   import Ecto.Query
 
   @impl true

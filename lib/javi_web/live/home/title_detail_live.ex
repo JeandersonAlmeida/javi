@@ -3,6 +3,7 @@ defmodule JaviWeb.Home.TitleDetailLive do
 
   alias Javi.Media
   import JaviWeb.Components.BottomNavigation
+  import JaviWeb.Components.Header
   import JaviWeb.Helpers.GenreHelper
 
   @impl true

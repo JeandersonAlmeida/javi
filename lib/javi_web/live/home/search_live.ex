@@ -4,6 +4,7 @@ defmodule JaviWeb.Home.SearchLive do
   alias Javi.Media
   alias Javi.Media.TMDB.Client, as: TMDBClient
   import JaviWeb.Components.BottomNavigation
+  import JaviWeb.Components.Header
 
   # Cache timeout in seconds (5 minutes)
   @cache_timeout 300

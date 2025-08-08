@@ -4,6 +4,7 @@ defmodule JaviWeb.Home.ProfileLive do
   alias Javi.Accounts
   alias Javi.Repo
   import JaviWeb.Components.BottomNavigation
+  import JaviWeb.Components.Header
   import Ecto.Query
 
   @impl true
