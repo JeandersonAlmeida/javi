@@ -5,7 +5,7 @@ defmodule JaviWeb.Components.BottomNavigation do
   def bottom_navigation(assigns) do
     ~H"""
     <!-- Mobile Bottom Navigation -->
-    <div class="fixed bottom-0 left-0 right-0 z-50 bg-[#212121] lg:hidden">
+    <div class="bottom-navigation-fixed fixed bottom-0 left-0 right-0 z-50 bg-[#212121] lg:hidden">
       <div class="flex gap-2 border-t border-[#303030] bg-[#212121] px-4 py-2">
         <.link
           navigate={~p"/inicio"}
