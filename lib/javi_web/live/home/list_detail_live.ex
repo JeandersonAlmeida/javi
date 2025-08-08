@@ -64,7 +64,7 @@ defmodule JaviWeb.Home.ListDetailLive do
 
   @impl true
   def handle_event("add_to_list", %{"title" => title_data}, socket) do
-    user = socket.assigns.current_user
+    user = socket.assigns.user
     list = socket.assigns.list
 
     case Jason.decode(title_data) do
@@ -90,15 +90,34 @@ defmodule JaviWeb.Home.ListDetailLive do
     user = socket.assigns.user
     list = socket.assigns.list
 
-    case Accounts.remove_title_from_list(list, list_item_id) do
-      {:ok, _} ->
-        # Refresh the list items and sort by newest first
-        updated_list = get_user_list(user, list.id)
-        sorted_list_items = Enum.sort_by(updated_list.list_items, & &1.inserted_at, :desc)
-        {:noreply, assign(socket, list_items: sorted_list_items)}
+    parsed_id =
+      cond do
+        is_integer(list_item_id) ->
+          list_item_id
 
-      {:error, _} ->
-        {:noreply, socket}
+        is_binary(list_item_id) ->
+          case Integer.parse(list_item_id) do
+            {int_id, _} -> int_id
+            :error -> nil
+          end
+
+        true ->
+          nil
+      end
+
+    if is_nil(parsed_id) do
+      {:noreply, socket}
+    else
+      case Accounts.remove_title_from_list(list, parsed_id) do
+        {:ok, _} ->
+          # Refresh the list items and sort by newest first
+          updated_list = get_user_list(user, list.id)
+          sorted_list_items = Enum.sort_by(updated_list.list_items, & &1.inserted_at, :desc)
+          {:noreply, assign(socket, list_items: sorted_list_items)}
+
+        {:error, _} ->
+          {:noreply, socket}
+      end
     end
   end
 
