@@ -36,89 +36,73 @@
         </div>
       </div>
 
-      <h2 class="text-white text-[22px] lg:text-2xl font-bold leading-tight tracking-[-0.015em] pb-3 lg:pb-6 pt-5 lg:pt-8">
-        Minhas Listas
-      </h2>
+      <div class="space-y-3">
+        <div>
+          <h2 class="text-white text-xl lg:text-2xl font-bold leading-tight tracking-[-0.015em]">
+            Minhas Listas
+          </h2>
 
-      <%= if length(@all_lists) > 0 do %>
-        <div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div class="flex items-stretch p-4 lg:p-6 gap-3 lg:gap-6">
-            <%= for {list, index} <- Enum.with_index(@all_lists) do %>
-              <div
-                class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40 lg:min-w-48 animate-slide-in"
-                style={"animation-delay: #{index * 0.1}s;"}
-              >
+          <div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div class="flex items-stretch py-4 gap-3 lg:gap-6">
+              <%= for {list, index} <- Enum.with_index(@all_lists) do %>
                 <div
-                  class="w-full aspect-[3/4] rounded-xl flex flex-col relative cursor-pointer hover:opacity-90 transition-all duration-300 hover:scale-105 hover:shadow-lg overflow-hidden"
-                  phx-click="navigate_to_list"
-                  phx-value-list-id={list.id}
+                  class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40 lg:min-w-48 animate-slide-in"
+                  style={"animation-delay: #{index * 0.1}s;"}
                 >
-                  <%= if length(list.list_items) > 2 do %>
-                    <div class="relative w-full h-full poster-carousel">
-                      <%= for {item, poster_index} <- Enum.with_index(list.list_items) do %>
-                        <div
-                          class="absolute inset-0 bg-center bg-no-repeat bg-cover poster-slide"
-                          style={"background-image: url(\"https://image.tmdb.org/t/p/w500#{item.title.poster_path}\");"}
-                          data-poster-index={poster_index}
-                        >
-                          <div class="absolute inset-0 bg-black bg-opacity-40"></div>
-                        </div>
-                      <% end %>
+                  <div
+                    class="w-full aspect-[3/4] rounded-xl flex flex-col relative cursor-pointer hover:opacity-90 transition-all duration-300 hover:scale-105 hover:shadow-lg overflow-hidden"
+                    phx-click="navigate_to_list"
+                    phx-value-list-id={list.id}
+                  >
+                    <%= if length(list.list_items) > 2 do %>
+                      <div class="relative w-full h-full poster-carousel">
+                        <%= for {item, poster_index} <- Enum.with_index(list.list_items) do %>
+                          <div
+                            class="absolute inset-0 bg-center bg-no-repeat bg-cover poster-slide"
+                            style={"background-image: url(\"https://image.tmdb.org/t/p/w500#{item.title.poster_path}\");"}
+                            data-poster-index={poster_index}
+                          >
+                            <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                          </div>
+                        <% end %>
+                      </div>
+                    <% else %>
+                      <div
+                        class="w-full h-full bg-center bg-no-repeat bg-cover"
+                        style={
+                          if length(list.list_items) == 1 do
+                            "background-image: url(\"https://image.tmdb.org/t/p/w500#{List.first(list.list_items).title.poster_path}\");"
+                          else
+                            get_list_background_style(list)
+                          end
+                        }
+                      >
+                        <div class="absolute inset-0 bg-black bg-opacity-40 rounded-xl"></div>
+                      </div>
+                    <% end %>
+                    <div class="absolute bottom-2 left-2 right-2 z-10">
+                      <p class="text-white text-sm lg:text-base font-semibold leading-tight">
+                        {list.name}
+                      </p>
+                      <p class="text-white text-xs lg:text-sm opacity-90 leading-tight">
+                        {length(list.list_items)} itens
+                      </p>
                     </div>
-                  <% else %>
-                    <div
-                      class="w-full h-full bg-center bg-no-repeat bg-cover"
-                      style={
-                        if length(list.list_items) == 1 do
-                          "background-image: url(\"https://image.tmdb.org/t/p/w500#{List.first(list.list_items).title.poster_path}\");"
-                        else
-                          get_list_background_style(list)
-                        end
-                      }
-                    >
-                      <div class="absolute inset-0 bg-black bg-opacity-40 rounded-xl"></div>
-                    </div>
-                  <% end %>
-                  <div class="absolute bottom-2 left-2 right-2 z-10">
-                    <p class="text-white text-sm lg:text-base font-semibold leading-tight">
-                      {list.name}
-                    </p>
-                    <p class="text-white text-xs lg:text-sm opacity-90 leading-tight">
-                      {length(list.list_items)} itens
-                    </p>
                   </div>
                 </div>
-              </div>
-            <% end %>
+              <% end %>
+            </div>
           </div>
         </div>
-      <% else %>
-        <div class="flex flex-col items-center justify-center p-8 lg:p-12">
-          <div class="text-center">
-            <p class="text-[#ababab] text-base lg:text-lg font-medium leading-normal mb-2">
-              Você ainda não tem listas
-            </p>
-            <p class="text-[#ababab] text-sm lg:text-base font-normal leading-normal mb-4 lg:mb-6">
-              Comece criando suas primeiras listas para organizar seus filmes e séries
-            </p>
-            <button
-              class="bg-blue-600 hover:bg-blue-700 text-white px-6 lg:px-8 py-2 lg:py-3 rounded-lg font-medium transition-colors text-sm lg:text-base"
-              phx-click="navigate_to_lists"
-            >
-              Criar Lista
-            </button>
-          </div>
-        </div>
-      <% end %>
 
-      <%= if length(@recent_movies) > 0 do %>
-        <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
-          Filmes Recentes
-        </h2>
-        <div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div class="flex items-stretch p-4 gap-3">
-            <%= for {movie, index} <- Enum.with_index(@recent_movies) do %>
+        <div :if={length(@recent_movies) > 0}>
+          <h2 class="text-white text-xl lg:text-2xl font-bold leading-tight tracking-[-0.015em]">
+            Filmes Recentes
+          </h2>
+          <div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div class="flex items-stretch py-4 gap-3 lg:gap-6">
               <div
+                :for={{movie, index} <- Enum.with_index(@recent_movies)}
                 class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-40 animate-slide-in"
                 style={"animation-delay: #{index * 0.1}s;"}
               >
@@ -151,10 +135,10 @@
                   </div>
                 </div>
               </div>
-            <% end %>
+            </div>
           </div>
         </div>
-      <% end %>
+      </div>
     </div>
   </div>
 
