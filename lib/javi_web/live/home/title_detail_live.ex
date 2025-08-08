@@ -24,11 +24,11 @@ defmodule JaviWeb.Home.TitleDetailLive do
         {:ok, push_navigate(socket, to: ~p"/pesquisar")}
 
       title ->
-        # Check if user has rated this title
-        user_rating = if user, do: get_user_rating(user, title), else: nil
+        # Check if title is in user's watched list (via Lists)
+        is_in_watched = if user, do: is_in_watched_list?(user, title), else: false
 
-        # Check if title is in user's watched list
-        is_in_watched = if user, do: Media.is_title_in_watched_list(user, title.id), else: false
+        # Get user's rating from watched list item if present
+        user_rating = if user && is_in_watched, do: get_user_rating(user, title), else: nil
 
         # Get user's lists for the add to lists modal
         user_lists = if user, do: Javi.Accounts.get_user_lists(user), else: []
@@ -72,11 +72,11 @@ defmodule JaviWeb.Home.TitleDetailLive do
         {:ok, push_navigate(socket, to: ~p"/pesquisar")}
 
       title ->
-        # Check if user has rated this title
-        user_rating = if user, do: get_user_rating(user, title), else: nil
+        # Check if title is in user's watched list (via Lists)
+        is_in_watched = if user, do: is_in_watched_list?(user, title), else: false
 
-        # Check if title is in user's watched list
-        is_in_watched = if user, do: Media.is_title_in_watched_list(user, title.id), else: false
+        # Get user's rating from watched list item if present
+        user_rating = if user && is_in_watched, do: get_user_rating(user, title), else: nil
 
         # Get user's lists for the add to lists modal
         user_lists = if user, do: Javi.Accounts.get_user_lists(user), else: []
@@ -253,36 +253,12 @@ defmodule JaviWeb.Home.TitleDetailLive do
       _user ->
         case Integer.parse(rating) do
           {rating_int, _} when rating_int >= 1 and rating_int <= 5 ->
-            case Media.get_user_title(user.id, title.id) do
-              nil ->
-                # Create new UserTitle with rating
-                case Media.create_user_title(%{
-                       user_id: user.id,
-                       title_id: title.id,
-                       status: :watched,
-                       rating: rating_int
-                     }) do
-                  {:ok, _user_title} ->
-                    socket =
-                      socket
-                      |> assign(:user_rating, rating_int)
-                      |> assign(:is_in_watched, true)
+            case Media.update_watched_list_item_rating(user, title.id, rating_int) do
+              {:ok, _list_item} ->
+                {:noreply, assign(socket, user_rating: rating_int)}
 
-                    {:noreply, socket}
-
-                  {:error, _} ->
-                    {:noreply, socket}
-                end
-
-              user_title ->
-                # Update existing UserTitle with rating
-                case Media.update_user_title(user_title, %{rating: rating_int}) do
-                  {:ok, _user_title} ->
-                    {:noreply, assign(socket, user_rating: rating_int)}
-
-                  {:error, _} ->
-                    {:noreply, socket}
-                end
+              {:error, _} ->
+                {:noreply, socket}
             end
 
           _ ->
@@ -300,19 +276,40 @@ defmodule JaviWeb.Home.TitleDetailLive do
       user ->
         title = socket.assigns.title
 
-        # Mark as watched using the new UserTitle system
-        case Media.mark_as_watched(user.id, title.id, %{date_watched: Date.utc_today()}) do
-          {:ok, _user_title} ->
-            # Update the socket to reflect the change
+        # Build a TMDB-like map from the current DB title to reuse Media.add_title_to_watched_list/2
+        title_data = %{
+          "id" => title.tmdb_id,
+          "title" => title.title,
+          "name" => title.title,
+          "overview" => title.overview,
+          "release_date" => title.release_date,
+          "first_air_date" => title.first_air_date,
+          "vote_average" => title.vote_average,
+          "vote_count" => title.vote_count,
+          "popularity" => title.popularity,
+          "poster_path" => title.poster_path,
+          "backdrop_path" => title.backdrop_path,
+          "adult" => title.adult,
+          "genre_ids" => title.genres,
+          "media_type" => title.tmdb_type,
+          "runtime" => title.runtime,
+          "episode_run_time" => title.episode_run_time,
+          "number_of_seasons" => title.number_of_seasons,
+          "number_of_episodes" => title.number_of_episodes
+        }
+
+        case Media.add_title_to_watched_list(user, title_data) do
+          {:ok, _list_item} ->
+            # Update assigns: now in watched, show rating UI tied to list item rating
             socket =
               socket
               |> assign(:is_in_watched, true)
-              # Get the updated user rating after adding to watched
               |> assign(:user_rating, get_user_rating(user, title))
+              |> assign(:title_lists, get_title_lists(user, title))
 
             {:noreply, socket}
 
-          {:error, _changeset} ->
+          {:error, _} ->
             {:noreply, socket}
         end
     end
@@ -321,10 +318,14 @@ defmodule JaviWeb.Home.TitleDetailLive do
   # Private functions
 
   defp get_user_rating(user, title) do
-    case Media.get_user_title(user.id, title.id) do
+    case Media.get_watched_list_item_by_title_id(user, title.id) do
       nil -> nil
-      user_title -> user_title.rating
+      list_item -> list_item.rating
     end
+  end
+
+  defp is_in_watched_list?(user, title) do
+    not is_nil(Media.get_watched_list_item_by_title_id(user, title.id))
   end
 
   defp parse_date(nil), do: nil

@@ -82,18 +82,6 @@
                 </div>
               </div>
             <% end %>
-            
-<!-- Mark as Watched Button (only for unwatched titles) -->
-            <%= if @user && !@is_in_watched do %>
-              <div class="flex items-center gap-3">
-                <button
-                  phx-click="add_to_watched"
-                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <.icon name="hero-eye" class="w-4 h-4" /> Marcar como Assistido
-                </button>
-              </div>
-            <% end %>
           </div>
           
 <!-- Title Details Section -->
@@ -154,31 +142,41 @@
                 </div>
               <% end %>
               
-<!-- Add to Lists Button -->
-              <button
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                phx-click="show_add_to_lists_modal"
-                phx-value-title={
-                  Jason.encode!(%{
-                    "id" => @title.tmdb_id,
-                    "title" => @title.title,
-                    "name" => @title.title,
-                    "overview" => @title.overview,
-                    "release_date" => @title.release_date,
-                    "first_air_date" => @title.first_air_date,
-                    "vote_average" => @title.vote_average,
-                    "vote_count" => @title.vote_count,
-                    "popularity" => @title.popularity,
-                    "poster_path" => @title.poster_path,
-                    "backdrop_path" => @title.backdrop_path,
-                    "adult" => @title.adult,
-                    "genre_ids" => @title.genres,
-                    "media_type" => @title.tmdb_type
-                  })
-                }
-              >
-                <.icon name="hero-plus" class="w-5 h-5" /> Adicionar às Listas
-              </button>
+<!-- Actions: Add to list + Assistido -->
+              <div class="flex items-center gap-3 w-full">
+                <button
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex-1 items-center justify-center gap-2"
+                  phx-click="show_add_to_lists_modal"
+                  phx-value-title={
+                    Jason.encode!(%{
+                      "id" => @title.tmdb_id,
+                      "title" => @title.title,
+                      "name" => @title.title,
+                      "overview" => @title.overview,
+                      "release_date" => @title.release_date,
+                      "first_air_date" => @title.first_air_date,
+                      "vote_average" => @title.vote_average,
+                      "vote_count" => @title.vote_count,
+                      "popularity" => @title.popularity,
+                      "poster_path" => @title.poster_path,
+                      "backdrop_path" => @title.backdrop_path,
+                      "adult" => @title.adult,
+                      "genre_ids" => @title.genres,
+                      "media_type" => @title.tmdb_type
+                    })
+                  }
+                >
+                  <.icon name="hero-plus" class="w-5 h-5" /> Adicionar às listas
+                </button>
+
+                <button
+                  :if={@user && !@is_in_watched}
+                  phx-click="add_to_watched"
+                  class="ml-auto bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <.icon name="hero-check" class="w-5 h-5 text-white" /> Assistido
+                </button>
+              </div>
             </div>
           <% end %>
         </div>

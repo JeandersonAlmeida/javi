@@ -393,53 +393,65 @@ defmodule JaviWeb.Home.DashboardLive do
   defp count_watched_movies(user) do
     import Ecto.Query
 
-    # Count from UserTitle with watched status
-    user_title_count =
+    # Get title ids from UserTitle with watched status (movies)
+    user_title_ids =
       from(ut in Javi.Media.UserTitle,
         join: t in Javi.Media.Title,
         on: ut.title_id == t.id,
-        where: ut.user_id == ^user.id and ut.status == :watched and t.tmdb_type == "movie"
+        where: ut.user_id == ^user.id and ut.status == :watched and t.tmdb_type == "movie",
+        select: ut.title_id
       )
-      |> Javi.Repo.aggregate(:count, :id)
+      |> Javi.Repo.all()
 
-    # Count from watched list
-    list_count =
+    # Get title ids from watched list (movies)
+    list_ids =
       from(li in Javi.Accounts.ListItem,
         join: l in Javi.Accounts.List,
         on: li.list_id == l.id,
         join: t in Javi.Media.Title,
         on: li.title_id == t.id,
-        where: l.user_id == ^user.id and l.list_type == "watched" and t.tmdb_type == "movie"
+        where: l.user_id == ^user.id and l.list_type == "watched" and t.tmdb_type == "movie",
+        select: li.title_id
       )
-      |> Javi.Repo.aggregate(:count, :id)
+      |> Javi.Repo.all()
 
-    user_title_count + list_count
+    # Count distinct titles across both sources to avoid duplication
+    user_title_ids
+    |> Kernel.++(list_ids)
+    |> MapSet.new()
+    |> MapSet.size()
   end
 
   defp count_watched_tv_series(user) do
     import Ecto.Query
 
-    # Count from UserTitle with watched status
-    user_title_count =
+    # Get title ids from UserTitle with watched status (tv)
+    user_title_ids =
       from(ut in Javi.Media.UserTitle,
         join: t in Javi.Media.Title,
         on: ut.title_id == t.id,
-        where: ut.user_id == ^user.id and ut.status == :watched and t.tmdb_type == "tv"
+        where: ut.user_id == ^user.id and ut.status == :watched and t.tmdb_type == "tv",
+        select: ut.title_id
       )
-      |> Javi.Repo.aggregate(:count, :id)
+      |> Javi.Repo.all()
 
-    # Count from watched list
-    list_count =
+    # Get title ids from watched list (tv)
+    list_ids =
       from(li in Javi.Accounts.ListItem,
         join: l in Javi.Accounts.List,
         on: li.list_id == l.id,
         join: t in Javi.Media.Title,
         on: li.title_id == t.id,
-        where: l.user_id == ^user.id and l.list_type == "watched" and t.tmdb_type == "tv"
+        where: l.user_id == ^user.id and l.list_type == "watched" and t.tmdb_type == "tv",
+        select: li.title_id
       )
-      |> Javi.Repo.aggregate(:count, :id)
+      |> Javi.Repo.all()
 
-    user_title_count + list_count
+    # Count distinct titles across both sources to avoid duplication
+    user_title_ids
+    |> Kernel.++(list_ids)
+    |> MapSet.new()
+    |> MapSet.size()
   end
 
   defp format_time_from_minutes(minutes) do
