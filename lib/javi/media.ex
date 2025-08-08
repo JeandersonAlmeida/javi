@@ -648,18 +648,44 @@ defmodule Javi.Media do
        when not is_nil(episode_run_time) and not is_nil(number_of_episodes) do
     # Use the first episode runtime if it's an array
     episode_runtime =
-      if is_list(episode_run_time), do: Enum.at(episode_run_time, 0), else: episode_run_time
+      cond do
+        is_list(episode_run_time) and length(episode_run_time) > 0 ->
+          Enum.at(episode_run_time, 0)
 
-    episode_runtime * number_of_episodes
+        is_number(episode_run_time) ->
+          episode_run_time
+
+        true ->
+          nil
+      end
+
+    if episode_runtime && is_number(episode_runtime) do
+      episode_runtime * number_of_episodes
+    else
+      0
+    end
   end
 
   defp calculate_title_minutes(%{tmdb_type: "tv", episode_run_time: episode_run_time})
        when not is_nil(episode_run_time) do
     # If we have episode runtime but no episode count, assume 1 episode
     episode_runtime =
-      if is_list(episode_run_time), do: Enum.at(episode_run_time, 0), else: episode_run_time
+      cond do
+        is_list(episode_run_time) and length(episode_run_time) > 0 ->
+          Enum.at(episode_run_time, 0)
 
-    episode_runtime
+        is_number(episode_run_time) ->
+          episode_run_time
+
+        true ->
+          nil
+      end
+
+    if episode_runtime && is_number(episode_runtime) do
+      episode_runtime
+    else
+      0
+    end
   end
 
   defp calculate_title_minutes(_), do: 0
