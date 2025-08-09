@@ -5,7 +5,7 @@ defmodule Javi.Accounts.UserNotifier do
   alias JaviWeb.EmailHelper
 
   # Delivers the email with HTML support
-  defp deliver_with_html(recipient, subject, text_body, html_body) do
+  defp deliver(recipient, subject, text_body, html_body) do
     email =
       new()
       |> to(recipient)
@@ -14,9 +14,9 @@ defmodule Javi.Accounts.UserNotifier do
       |> text_body(text_body)
       |> html_body(html_body)
 
-    with {:ok, _metadata} <- Mailer.deliver(email) do
-      {:ok, email}
-    end
+      with {:ok, _metadata} <- Mailer.deliver(email) do
+        {:ok, email}
+      end
   end
 
   @doc """
@@ -39,7 +39,7 @@ defmodule Javi.Accounts.UserNotifier do
 
     html_body = EmailHelper.confirmation_email_template(user.email, url)
 
-    deliver_with_html(user.email, "Confirmar Sua Conta - Javi", text_body, html_body)
+    deliver(user.email, "Confirmar Sua Conta - Javi", text_body, html_body)
   end
 
   @doc """
@@ -62,7 +62,7 @@ defmodule Javi.Accounts.UserNotifier do
 
     html_body = EmailHelper.password_reset_email_template(user.email, url)
 
-    deliver_with_html(user.email, "Redefinir Sua Senha - Javi", text_body, html_body)
+    deliver(user.email, "Redefinir Sua Senha - Javi", text_body, html_body)
   end
 
   @doc """
@@ -85,6 +85,6 @@ defmodule Javi.Accounts.UserNotifier do
 
     html_body = EmailHelper.email_update_template(user.email, url)
 
-    deliver_with_html(user.email, "Atualizar Seu Email - Javi", text_body, html_body)
+    deliver(user.email, "Atualizar Seu Email - Javi", text_body, html_body)
   end
 end

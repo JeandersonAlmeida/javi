@@ -104,8 +104,9 @@ if config_env() == :prod do
     relay: System.get_env("BREVO_MAILER_RELAY"),
     username: System.get_env("BREVO_MAILER_USERNAME"),
     password: System.get_env("BREVO_MAILER_PASSWORD"),
-    port: System.get_env("BREVO_MAILER_PORT"),
-    sender: System.get_env("JAVI_MAILER_SENDER")
+    port: System.get_env("BREVO_MAILER_PORT")
+
+  config :swoosh, :api_client, Swoosh.ApiClient.Hackney
 
   # ## Configuring the mailer
   #
@@ -120,8 +121,6 @@ if config_env() == :prod do
   #
   # For this example you need include a HTTP client required by Swoosh API client.
   # Swoosh supports Hackney and Finch out of the box:
-  #
-  config :swoosh, :api_client, Swoosh.ApiClient.Hackney
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 
