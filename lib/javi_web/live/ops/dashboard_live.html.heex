@@ -44,6 +44,9 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Inserted At
                 </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-[#303030]">
@@ -66,9 +69,18 @@
                 <td class="px-4 py-3 text-sm text-gray-300">
                   {Calendar.strftime(u.inserted_at, "%Y-%m-%d %H:%M:%S")}
                 </td>
+                <td class="px-4 py-3 text-sm text-right">
+                  <button
+                    phx-click="delete_user"
+                    phx-value-id={u.id}
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-red-500 text-white hover:bg-red-500/90 h-9 px-4 py-2"
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
               <tr :if={@recent_users == []}>
-                <td colspan="6" class="px-4 py-6 text-center text-gray-400">No users found.</td>
+                <td colspan="7" class="px-4 py-6 text-center text-gray-400">No users found.</td>
               </tr>
             </tbody>
           </table>

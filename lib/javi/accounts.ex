@@ -429,6 +429,35 @@ defmodule Javi.Accounts do
   end
 
   @doc """
+  Deletes a user.
+
+  ## Examples
+
+      iex> delete_user(123)
+      {:ok, %User{}}
+
+      iex> delete_user(456)
+      {:error, :not_found}
+
+  """
+  def delete_user(user_id) do
+    user = Repo.get(User, user_id)
+
+    if user do
+      Ecto.Multi.new()
+      |> Ecto.Multi.delete_all(:lists, from(l in List, where: l.user_id == ^user.id))
+      |> Ecto.Multi.delete(:user, user)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{user: deleted_user}} -> {:ok, deleted_user}
+        {:error, _failed_op, reason, _changes} -> {:error, reason}
+      end
+    else
+      {:error, :not_found}
+    end
+  end
+
+  @doc """
   Updates user privacy settings.
 
   ## Examples
