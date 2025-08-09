@@ -111,4 +111,14 @@ defmodule JaviWeb.Router do
       live "/confirmar", Account.ConfirmationInstructionsLive, :new
     end
   end
+
+  # Public user profile by nickname - must be last to avoid conflicting with other routes
+  scope "/", JaviWeb do
+    pipe_through [:browser]
+
+    live_session :public_profile,
+      on_mount: [{JaviWeb.UserAuth, :mount_current_user}] do
+      live "/:user_nickname", Public.UserProfileLive, :show
+    end
+  end
 end

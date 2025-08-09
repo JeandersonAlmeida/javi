@@ -21,6 +21,16 @@ defmodule Javi.Accounts do
   end
 
   @doc """
+  Gets a user by nickname.
+
+  Normalizes nickname to the stored canonical form.
+  """
+  def get_user_by_nickname(nickname) when is_binary(nickname) do
+    normalized = normalize_nickname(nickname)
+    Repo.get_by(User, nickname: normalized)
+  end
+
+  @doc """
   Gets a user by email and password.
 
   ## Examples
@@ -895,7 +905,7 @@ defmodule Javi.Accounts do
             display_name
 
           is_binary(email) and String.trim(email) != "" ->
-            email |> String.split("@") |> List.first()
+            email |> String.split("@") |> Enum.at(0)
 
           true ->
             "user"
