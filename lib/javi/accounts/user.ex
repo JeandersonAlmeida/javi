@@ -67,6 +67,10 @@ defmodule Javi.Accounts.User do
     # Onboarding
     field :onboarding_completed, :boolean, default: false
 
+    # Virtual computed fields (for Ops dashboard)
+    field :list_count, :integer, virtual: true
+    field :last_title_added_at, :utc_datetime, virtual: true
+
     # Associations
     has_many :user_titles, Javi.Media.UserTitle
     has_many :titles, through: [:user_titles, :title]

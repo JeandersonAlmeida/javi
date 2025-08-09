@@ -1,0 +1,87 @@
+<div class="relative flex size-full min-h-screen flex-col bg-[#141414] overflow-x-hidden">
+  <!-- Ops Header -->
+  <.top_header title="Ops Panel" ml_for_sidebar={false} />
+  
+<!-- Content -->
+  <div class="flex-1 overflow-y-auto pt-20 pb-6">
+    <div class="px-4 lg:px-8 max-w-7xl mx-auto space-y-8">
+      <!-- Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+        <div class="rounded-xl border border-[#303030] bg-[#1a1a1a] p-6">
+          <p class="text-gray-400 text-sm">Users</p>
+          <p class="text-white text-3xl font-bold mt-1">{@users_count}</p>
+        </div>
+        <div class="rounded-xl border border-[#303030] bg-[#1a1a1a] p-6">
+          <p class="text-gray-400 text-sm">Lists</p>
+          <p class="text-white text-3xl font-bold mt-1">{@lists_count}</p>
+        </div>
+      </div>
+      
+<!-- Users table -->
+      <div class="rounded-xl border border-[#303030] bg-[#1a1a1a]">
+        <div class="px-4 py-4 border-b border-[#303030]">
+          <h2 class="text-white text-lg font-semibold">Recent Users</h2>
+        </div>
+        <div class="overflow-x-auto w-full">
+          <table class="w-full divide-y divide-[#303030]">
+            <thead class="bg-[#1f1f1f]">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Display Name
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Email
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Confirmed
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Lists
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Last Title Added
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Inserted At
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#303030]">
+              <tr :for={u <- @recent_users} class="hover:bg-[#222222] transition-colors">
+                <td class="px-4 py-3 text-sm text-white">{u.display_name || "-"}</td>
+                <td class="px-4 py-3 text-sm text-gray-300">{u.email}</td>
+                <td class="px-4 py-3 text-sm">
+                  <span class={"px-2 py-1 rounded-full text-xs #{if u.confirmed_at, do: "bg-green-600/20 text-green-300", else: "bg-yellow-600/20 text-yellow-300"}"}>
+                    {if u.confirmed_at, do: "Yes", else: "Pending"}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-300">
+                  {u.list_count || 0}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-300">
+                  {if u.last_title_added_at,
+                    do: Calendar.strftime(u.last_title_added_at, "%Y-%m-%d %H:%M:%S"),
+                    else: "-"}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-300">
+                  {Calendar.strftime(u.inserted_at, "%Y-%m-%d %H:%M:%S")}
+                </td>
+              </tr>
+              <tr :if={@recent_users == []}>
+                <td colspan="6" class="px-4 py-6 text-center text-gray-400">No users found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+<!-- Placeholder for future panels -->
+      <div class="rounded-xl border border-[#303030] bg-[#1a1a1a] p-6">
+        <h3 class="text-white text-lg font-semibold mb-2">More metrics</h3>
+        <p class="text-gray-400 text-sm">
+          Add charts or additional tables here (e.g., growth, usage, errors).
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

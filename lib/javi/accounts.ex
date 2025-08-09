@@ -6,23 +6,17 @@ defmodule Javi.Accounts do
   import Ecto.Query, warn: false
   alias Javi.Repo
 
-  alias Javi.Accounts.{User, UserToken, UserNotifier, List, ListItem}
+  alias Javi.Accounts.{User, UserToken, UserNotifier, List, ListItem, StaffUser, StaffUserToken}
 
   ## Database getters
 
   @doc """
   Gets a user by email.
 
-  ## Examples
-
-      iex> get_user_by_email("foo@example.com")
-      %User{}
-
-      iex> get_user_by_email("unknown@example.com")
-      nil
-
+  Normalizes by trimming and downcasing.
   """
   def get_user_by_email(email) when is_binary(email) do
+    email = email |> String.trim() |> String.downcase()
     Repo.get_by(User, email: email)
   end
 
@@ -73,6 +67,102 @@ defmodule Javi.Accounts do
     Repo.all(User)
   end
 
+  @doc """
+  Lists users with aggregated stats for Ops dashboard:
+  - list_count: distinct count of lists per user
+  - last_title_added_at: latest added_at across all user's list items
+  Ordered by newest users and limited to the given amount (default: 20).
+  """
+  def list_users_with_stats(limit \\ 20) when is_integer(limit) and limit > 0 do
+    from(u in User,
+      left_join: l in List,
+      on: l.user_id == u.id,
+      left_join: li in ListItem,
+      on: li.list_id == l.id,
+      group_by: u.id,
+      order_by: [desc: u.inserted_at],
+      select: u,
+      select_merge: %{
+        list_count: count(l.id, :distinct),
+        last_title_added_at: max(li.added_at)
+      },
+      limit: ^limit
+    )
+    |> Repo.all()
+  end
+
+  # ---------- Staff Helpers ----------
+
+  defp normalize_email(email) when is_binary(email),
+    do: email |> String.trim() |> String.downcase()
+
+  defp normalize_email(email), do: email
+
+  @doc """
+  Gets a staff user by email (normalized).
+  """
+  def get_staff_user_by_email(email) when is_binary(email) do
+    Repo.get_by(StaffUser, email: normalize_email(email))
+  end
+
+  @doc """
+  Gets a staff user by email and password.
+  Trims input and performs case-insensitive email lookup (citext) with normalized string.
+  """
+  def get_staff_user_by_email_and_password(email, password)
+      when is_binary(email) and is_binary(password) do
+    staff = Repo.get_by(StaffUser, email: normalize_email(email))
+
+    if staff && StaffUser.valid_password?(staff, String.trim(password)) do
+      staff
+    else
+      nil
+    end
+  end
+
+  ## Staff users (Ops)
+
+  @doc """
+  Registers a staff user.
+  """
+  def register_staff_user(attrs \\ %{}) do
+    %StaffUser{}
+    |> StaffUser.registration_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Lists staff users.
+  """
+  def list_staff_users do
+    Repo.all(StaffUser)
+  end
+
+  @doc """
+  Generates a staff session token.
+  """
+  def generate_staff_user_session_token(staff) do
+    {token, staff_token} = StaffUserToken.build_session_token(staff)
+    Repo.insert!(staff_token)
+    token
+  end
+
+  @doc """
+  Gets the staff user from a session token.
+  """
+  def get_staff_user_by_session_token(token) do
+    {:ok, query} = StaffUserToken.verify_session_token_query(token)
+    Repo.one(query)
+  end
+
+  @doc """
+  Deletes a staff session token by raw token.
+  """
+  def delete_staff_user_session_token(token) do
+    Repo.delete_all(StaffUserToken.by_token_and_context_query(token, "session"))
+    :ok
+  end
+
   ## User registration
 
   @doc """
@@ -93,8 +183,12 @@ defmodule Javi.Accounts do
     |> Repo.insert()
     |> case do
       {:ok, user} ->
-        # Create default lists for the new user
+        # Create default lists for the new user (synchronous inserts)
         User.create_default_lists(user)
+
+        # Broadcast to Ops Dashboard subscribers so it updates in real-time
+        Phoenix.PubSub.broadcast(Javi.PubSub, "accounts:users", {:user_created, user.id})
+
         {:ok, user}
 
       error ->

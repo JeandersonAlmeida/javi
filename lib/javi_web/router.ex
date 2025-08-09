@@ -2,6 +2,7 @@ defmodule JaviWeb.Router do
   use JaviWeb, :router
 
   import JaviWeb.UserAuth
+  import JaviWeb.StaffAuth
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -11,6 +12,7 @@ defmodule JaviWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :fetch_current_user
+    plug :fetch_current_staff
   end
 
   pipeline :api do
@@ -76,6 +78,25 @@ defmodule JaviWeb.Router do
       live "/configuracoes/confirmar-email/:token", Home.UserSettingsLive, :confirm_email
       live "/onboarding", Onboarding.OnboardingLive, :index
     end
+  end
+
+  ## Staff (Ops) authentication routes
+  scope "/ops", JaviWeb do
+    pipe_through [:browser, :redirect_if_staff_is_authenticated]
+    live "/login", Ops.StaffUserLoginLive, :new
+    post "/login", StaffSessionController, :create
+  end
+
+  ## Staff (Ops) protected routes
+  scope "/ops", JaviWeb do
+    pipe_through [:browser, :require_authenticated_staff]
+
+    live_session :require_authenticated_staff,
+      on_mount: [{JaviWeb.StaffAuth, :ensure_staff_authenticated}] do
+      live "/", Ops.DashboardLive, :index
+    end
+
+    delete "/logout", StaffSessionController, :delete
   end
 
   scope "/", JaviWeb do
