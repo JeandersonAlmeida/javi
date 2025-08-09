@@ -4,6 +4,7 @@ defmodule Javi.Accounts.User do
 
   schema "users" do
     field :email, :string
+    field :nickname, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
@@ -104,10 +105,13 @@ defmodule Javi.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password, :display_name])
+    |> cast(attrs, [:email, :password, :display_name, :nickname])
     |> validate_email(opts)
     |> validate_password(opts)
     |> validate_display_name()
+    |> update_change(:nickname, &normalize_nickname/1)
+    |> validate_nickname()
+    |> unique_constraint(:nickname)
     |> put_change(:onboarding_completed, false)
   end
 
@@ -244,6 +248,7 @@ defmodule Javi.Accounts.User do
     user
     |> cast(attrs, [
       :display_name,
+      :nickname,
       :bio,
       :avatar_url,
       :preferred_language,
@@ -274,6 +279,9 @@ defmodule Javi.Accounts.User do
     |> validate_number(:min_rating_filter, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
     |> validate_preferred_genres()
     |> validate_excluded_genres()
+    |> update_change(:nickname, &normalize_nickname/1)
+    |> validate_nickname()
+    |> unique_constraint(:nickname)
     |> put_change(:last_activity_at, DateTime.utc_now() |> DateTime.truncate(:second))
   end
 
@@ -488,6 +496,42 @@ defmodule Javi.Accounts.User do
 
       _ ->
         add_error(changeset, :excluded_genres, "must be a list")
+    end
+  end
+
+  # --- Nickname helpers ---
+  defp normalize_nickname(nil), do: nil
+
+  defp normalize_nickname(nickname) when is_binary(nickname) do
+    nickname
+    |> String.downcase()
+    |> String.trim()
+    # Replace anything not allowed (keep a-z, 0-9, dot, underscore, hyphen)
+    |> String.replace(~r/[^a-z0-9._-]+/u, "-")
+    # Collapse consecutive separators
+    |> String.replace(~r/[-_.]{2,}/, "-")
+    # Trim separators from ends
+    |> String.trim("-._")
+  end
+
+  defp validate_nickname(changeset) do
+    case get_field(changeset, :nickname) do
+      nil ->
+        changeset
+
+      "" ->
+        changeset
+
+      _ ->
+        reserved = ~w(admin root support staff system mod moderator owner javi)
+
+        changeset
+        |> validate_length(:nickname, min: 3, max: 32)
+        |> validate_format(:nickname, ~r/^[a-z0-9][a-z0-9._-]*[a-z0-9]$/,
+          message: "must be lowercase letters, numbers or . _ -, cannot start/end with separators"
+        )
+        |> validate_exclusion(:nickname, reserved, message: "is reserved")
+        |> unsafe_validate_unique(:nickname, Javi.Repo)
     end
   end
 end

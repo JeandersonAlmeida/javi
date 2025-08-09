@@ -114,7 +114,45 @@
                   </div>
                 <% end %>
               </div>
-
+              
+<!-- Nickname -->
+              <div class="space-y-2 lg:space-y-3">
+                <label class="block text-sm lg:text-base font-medium text-gray-300">
+                  Apelido (nickname)
+                </label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 lg:pl-4 flex items-center pointer-events-none">
+                    <.icon name="hero-at-symbol" class="h-5 w-5 lg:h-6 lg:w-6 text-gray-400" />
+                  </div>
+                  <PetalComponents.Form.text_input
+                    form={@profile_form}
+                    field={:nickname}
+                    class="form-input block w-full pl-10 lg:pl-12 pr-24 py-3 lg:py-4 border border-gray-600 rounded-xl bg-[#303030] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-base lg:text-lg"
+                    placeholder="seu-nick"
+                  />
+                  <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                    <span class={
+                      "text-xs font-medium px-2 py-1 rounded " <>
+                      (if to_string(@profile_form[:nickname].value || "") != "" do
+                         if @nickname_available, do: "text-green-300 bg-green-900/40", else: "text-red-300 bg-red-900/40"
+                       else
+                         "hidden"
+                       end)
+                    }>
+                      {if @nickname_available, do: "Disponível", else: "Indisponível"}
+                    </span>
+                  </div>
+                </div>
+                <%= if @profile_form[:nickname].errors do %>
+                  <div class="text-red-400 text-sm lg:text-base mt-1">
+                    <%= for error <- @profile_form[:nickname].errors do %>
+                      <p>{elem(error, 0)}</p>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+              
+<!-- Email -->
               <div class="space-y-2 lg:space-y-3">
                 <label class="block text-sm lg:text-base font-medium text-gray-300">
                   Email

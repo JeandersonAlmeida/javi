@@ -178,6 +178,8 @@ defmodule Javi.Accounts do
 
   """
   def register_user(attrs \\ %{}) do
+    attrs = ensure_generated_nickname(attrs)
+
     %User{}
     |> User.registration_changeset(attrs)
     |> Repo.insert()
@@ -870,4 +872,101 @@ defmodule Javi.Accounts do
       [first | _] -> first
     end
   end
+
+  # --- Nickname helpers (Accounts) ---
+
+  # Ensures we generate a nickname during registration if none was supplied.
+  # Keeps attrs structure (string keys typical from forms).
+  defp ensure_generated_nickname(attrs) when is_map(attrs) do
+    provided =
+      Map.get(attrs, "nickname") ||
+        Map.get(attrs, :nickname)
+
+    if present?(provided) do
+      # Leave provided nickname as-is; schema validations will normalize/validate/unique it.
+      attrs
+    else
+      display_name = Map.get(attrs, "display_name") || Map.get(attrs, :display_name)
+      email = Map.get(attrs, "email") || Map.get(attrs, :email)
+
+      base =
+        cond do
+          is_binary(display_name) and String.trim(display_name) != "" ->
+            display_name
+
+          is_binary(email) and String.trim(email) != "" ->
+            email |> String.split("@") |> List.first()
+
+          true ->
+            "user"
+        end
+
+      normalized = normalize_nickname(base)
+
+      nickname = generate_unique_nickname(normalized)
+
+      # Use string key to match LiveView form params
+      Map.put(attrs, "nickname", nickname)
+    end
+  end
+
+  def nickname_available?(nickname, exclude_user_id \\ nil) do
+    normalized = normalize_nickname(nickname || "")
+
+    cond do
+      normalized == "" ->
+        false
+
+      true ->
+        case Repo.get_by(User, nickname: normalized) do
+          nil -> true
+          %User{id: id} when not is_nil(exclude_user_id) and id == exclude_user_id -> true
+          _ -> false
+        end
+    end
+  end
+
+  def generate_unique_nickname(base) do
+    base =
+      base
+      |> normalize_nickname()
+      |> case do
+        "" -> "user"
+        other -> other
+      end
+
+    # Try base, then base-2, base-3, ...
+    if Repo.get_by(User, nickname: base) == nil do
+      base
+    else
+      Stream.iterate(2, &(&1 + 1))
+      |> Enum.reduce_while(nil, fn n, _acc ->
+        candidate = "#{base}-#{n}"
+
+        if Repo.get_by(User, nickname: candidate) == nil do
+          {:halt, candidate}
+        else
+          {:cont, nil}
+        end
+      end)
+      |> case do
+        nil -> base <> "-#{System.unique_integer([:positive])}"
+        candidate -> candidate
+      end
+    end
+  end
+
+  defp normalize_nickname(nickname) when is_binary(nickname) do
+    nickname
+    |> String.downcase()
+    |> String.trim()
+    |> String.replace(~r/[^a-z0-9._-]+/u, "-")
+    |> String.replace(~r/[-_.]{2,}/, "-")
+    |> String.trim("-._")
+  end
+
+  defp normalize_nickname(_), do: ""
+
+  defp present?(val) when is_binary(val), do: String.trim(val) != ""
+  defp present?(_), do: false
 end

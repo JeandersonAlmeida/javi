@@ -48,6 +48,8 @@ defmodule JaviWeb.Home.UserSettingsLive do
       |> assign(:user_stats, user_stats)
       |> assign(:recent_watched, recent_watched)
       |> assign(:current_page, :profile)
+      # Nickname availability state for live feedback
+      |> assign(:nickname_available, true)
 
     {:ok, socket}
   end
@@ -91,7 +93,19 @@ defmodule JaviWeb.Home.UserSettingsLive do
       |> Accounts.change_user_profile(user_params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign(socket, :profile_form, to_form(changeset))}
+    nickname = Map.get(user_params, "nickname") || ""
+
+    available =
+      if String.trim(nickname) == "" do
+        true
+      else
+        Accounts.nickname_available?(nickname, socket.assigns.current_user.id)
+      end
+
+    {:noreply,
+     socket
+     |> assign(:profile_form, to_form(changeset))
+     |> assign(:nickname_available, available)}
   end
 
   def handle_event("update_profile", %{"user" => user_params}, socket) do
