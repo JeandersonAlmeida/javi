@@ -9,14 +9,14 @@ defmodule Javi.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Javi", "noreply@javi.ornender.com"})
+      |> from({"Javi", "jeanderson.dev@gmail.com"})
       |> subject(subject)
       |> text_body(text_body)
       |> html_body(html_body)
 
-      with {:ok, _metadata} <- Mailer.deliver(email) do
-        {:ok, email}
-      end
+    with {:ok, _metadata} <- Mailer.deliver(email) do
+      {:ok, email}
+    end
   end
 
   @doc """
