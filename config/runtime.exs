@@ -104,7 +104,7 @@ if config_env() == :prod do
     relay: System.get_env("BREVO_MAILER_RELAY"),
     username: System.get_env("BREVO_MAILER_USERNAME"),
     password: System.get_env("BREVO_MAILER_PASSWORD"),
-    port: System.get_env("BREVO_MAILER_PORT")
+    port: String.to_integer(System.get_env("BREVO_MAILER_PORT") || "587")
 
   config :swoosh, :api_client, Swoosh.ApiClient.Hackney
 
