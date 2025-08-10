@@ -113,7 +113,7 @@ defmodule JaviWeb.Public.UserProfileLive do
 
   defp list_by_type(lists, type), do: Enum.find(lists, &(&1.list_type == type))
 
-  defp take_items(list, n \\ 9) do
+  defp take_items(list, n) do
     list
     |> case do
       nil -> []
@@ -130,7 +130,7 @@ defmodule JaviWeb.Public.UserProfileLive do
 
   defp poster_url(_), do: nil
 
-  defp render_section(title, nil), do: nil
+  defp render_section(_title, nil), do: nil
 
   defp render_section(title, list) do
     assigns = %{title: title, items: take_items(list, 9)}
@@ -144,17 +144,17 @@ defmodule JaviWeb.Public.UserProfileLive do
       <% else %>
         <div class="grid grid-cols-3 gap-3 lg:gap-4">
           <%= for li <- @items do %>
-            <% title = title_for_item(li) %>
-            <% url = poster_url(title) %>
+            <% title_data = title_for_item(li) %>
+            <% url = poster_url(title_data) %>
             <div class="relative group">
               <div
                 class="w-full bg-center bg-no-repeat aspect-[2/3] bg-cover rounded-xl"
                 style={if url, do: "background-image: url(#{url})", else: ""}
-                title={title.title}
+                title={title_data.title}
               >
               </div>
               <div class="absolute bottom-2 left-2 text-white text-[11px] bg-black/70 rounded px-2 py-1 truncate max-w-[80%]">
-                {title.title}
+                {title_data.title}
               </div>
             </div>
           <% end %>

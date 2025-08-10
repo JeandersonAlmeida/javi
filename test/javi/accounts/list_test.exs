@@ -2,7 +2,6 @@ defmodule Javi.Accounts.ListTest do
   use Javi.DataCase
 
   alias Javi.Accounts.{List}
-  alias Javi.Repo
 
   import Javi.AccountsFixtures
 

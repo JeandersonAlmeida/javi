@@ -2,7 +2,6 @@ defmodule Javi.Accounts.UserTest do
   use Javi.DataCase
 
   alias Javi.Accounts.User
-  alias Javi.Repo
 
   import Javi.AccountsFixtures
 

@@ -83,9 +83,13 @@ defmodule Javi.Media.TMDB.Client.Test do
   def get_tv_details(_), do: {:error, "Invalid TV show ID"}
 
   @impl Javi.Media.TMDB.Client
-  def get_trending_movies(_time_window \\ "day") do
+  def get_trending_movies(time_window \\ "day")
+
+  def get_trending_movies(time_window) when time_window in ["day", "week"] do
     {:ok, %{"results" => []}}
   end
+
+  def get_trending_movies(_), do: {:error, "Invalid time window. Use 'day' or 'week'"}
 
   @impl Javi.Media.TMDB.Client
   def get_trending_tv(_time_window \\ "day") do

@@ -5,9 +5,9 @@
       <.link navigate={~p"/"} class="text-sm text-[#ababab] hover:text-white">Voltar</.link>
     </div>
 
-    <%= if live_flash(@flash, :error) do %>
-      <p class="text-red-400 text-sm mb-3">{live_flash(@flash, :error)}</p>
-    <% end %>
+    <p :if={@flash[:error]} class="text-red-400 text-sm mb-3">
+      {@flash[:error]}
+    </p>
 
     <.form for={%{}} action={~p"/ops/login"} method="post" class="space-y-4">
       <div class="space-y-2">

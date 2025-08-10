@@ -32,13 +32,6 @@ defmodule Javi.Accounts.ListItemTest do
   end
 
   def list_item_fixture(list, title, _attrs \\ %{}) do
-    attrs =
-      Enum.into(%{}, %{
-        list_id: list.id,
-        title_id: title.id,
-        position: 1
-      })
-
     {:ok, list_item} = Javi.Accounts.add_title_to_list(list, title)
     list_item
   end
