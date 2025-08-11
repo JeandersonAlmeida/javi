@@ -233,6 +233,31 @@ defmodule Javi.Media.TMDB.Client.Prod do
   def get_movies_by_genre(_), do: {:error, "Invalid genre ID"}
 
   @impl Javi.Media.TMDB.Client
+  def get_movies_by_genre(genre_id, page)
+      when is_integer(genre_id) and genre_id > 0 and is_integer(page) and page > 0 do
+    case get("/discover/movie",
+           query: [
+             api_key: get_api_key(),
+             language: "pt-BR",
+             with_genres: genre_id,
+             sort_by: "release_date.desc",
+             page: page
+           ]
+         ) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def get_movies_by_genre(_, _), do: {:error, "Invalid genre ID or page"}
+
+  @impl Javi.Media.TMDB.Client
   def get_popular_movies_by_genre(genre_id) when is_integer(genre_id) and genre_id > 0 do
     case get("/discover/movie",
            query: [
@@ -255,6 +280,73 @@ defmodule Javi.Media.TMDB.Client.Prod do
   end
 
   def get_popular_movies_by_genre(_), do: {:error, "Invalid genre ID"}
+
+  @impl Javi.Media.TMDB.Client
+  def get_popular_movies_by_genre(genre_id, page)
+      when is_integer(genre_id) and genre_id > 0 and is_integer(page) and page > 0 do
+    case get("/discover/movie",
+           query: [
+             api_key: get_api_key(),
+             language: "pt-BR",
+             with_genres: genre_id,
+             sort_by: "popularity.desc",
+             page: page
+           ]
+         ) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def get_popular_movies_by_genre(_, _), do: {:error, "Invalid genre ID or page"}
+
+  @impl Javi.Media.TMDB.Client
+  def get_now_playing_movies() do
+    case get("/movie/now_playing", query: [api_key: get_api_key(), language: "pt-BR"]) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @impl Javi.Media.TMDB.Client
+  def get_popular_tv() do
+    case get("/tv/popular", query: [api_key: get_api_key(), language: "pt-BR"]) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @impl Javi.Media.TMDB.Client
+  def get_top_rated_tv() do
+    case get("/tv/top_rated", query: [api_key: get_api_key(), language: "pt-BR"]) do
+      {:ok, %Tesla.Env{status: 200, body: body}} ->
+        {:ok, filter_adult_content(body)}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, "HTTP #{status}"}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 
   # Private functions
 

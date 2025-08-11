@@ -73,6 +73,12 @@ defmodule JaviWeb.Router do
       live "/listas/:id", Home.ListDetailLive, :show
       live "/titulos/:id", Home.TitleDetailLive, :show
       live "/pesquisar", Home.SearchLive, :index
+      # Section routes with descriptive names for better SEO
+      live "/filmes-em-alta", Home.SectionTitlesLive, :show
+      live "/series-populares", Home.SectionTitlesLive, :show
+      live "/lancamentos-recentes", Home.SectionTitlesLive, :show
+      live "/melhores-avaliados", Home.SectionTitlesLive, :show
+      live "/genero/:genre_name/:genre_id", Home.SectionTitlesLive, :show
       live "/perfil", Home.ProfileLive, :index
       live "/configuracoes", Home.UserSettingsLive, :edit
       live "/configuracoes/confirmar-email/:token", Home.UserSettingsLive, :confirm_email

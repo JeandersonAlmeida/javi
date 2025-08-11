@@ -406,10 +406,13 @@ defmodule JaviWeb.Home.SearchLive do
           end)
 
         # If we don't have enough titles after deduplication, try to fetch more
-        if length(available_titles) < @titles_per_genre do
-          additional_titles = fetch_additional_titles_by_genre(genre.id, used_title_ids)
-          available_titles = available_titles ++ additional_titles
-        end
+        available_titles =
+          if length(available_titles) < @titles_per_genre do
+            additional_titles = fetch_additional_titles_by_genre(genre.id, used_title_ids)
+            available_titles ++ additional_titles
+          else
+            available_titles
+          end
 
         # Limit to the desired number of titles
         final_titles = Enum.take(available_titles, @titles_per_genre)
@@ -442,7 +445,7 @@ defmodule JaviWeb.Home.SearchLive do
           {:ok, %{"results" => results}} ->
             results
 
-          {:error, error} ->
+          {:error, _error} ->
             []
         end
       end)
@@ -453,7 +456,7 @@ defmodule JaviWeb.Home.SearchLive do
           {:ok, %{"results" => results}} ->
             results
 
-          {:error, error} ->
+          {:error, _error} ->
             []
         end
       end)
@@ -479,7 +482,7 @@ defmodule JaviWeb.Home.SearchLive do
     all_results
   end
 
-  defp fetch_additional_titles_by_genre(genre_id, used_title_ids) do
+  defp fetch_additional_titles_by_genre(genre_id, _used_title_ids) do
     # Get popular movies for the genre
     popular_task =
       Task.async(fn ->
@@ -487,7 +490,7 @@ defmodule JaviWeb.Home.SearchLive do
           {:ok, %{"results" => results}} ->
             results
 
-          {:error, error} ->
+          {:error, _error} ->
             []
         end
       end)
@@ -499,7 +502,7 @@ defmodule JaviWeb.Home.SearchLive do
           {:ok, %{"results" => results}} ->
             results
 
-          {:error, error} ->
+          {:error, _error} ->
             []
         end
       end)

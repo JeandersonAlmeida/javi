@@ -287,6 +287,32 @@ defmodule Javi.Media.TMDB.Client.Test do
   def get_movies_by_genre(_), do: {:error, "Invalid genre ID"}
 
   @impl Javi.Media.TMDB.Client
+  def get_movies_by_genre(genre_id, page)
+      when is_integer(genre_id) and genre_id > 0 and is_integer(page) and page > 0 do
+    # Mock response for testing
+    {:ok,
+     %{
+       "page" => page,
+       "results" => [
+         %{
+           "id" => 2000 + page,
+           "title" => "Test Movie by Genre #{page}",
+           "overview" => "Test overview for movie by genre #{page}",
+           "poster_path" => "/test-poster.jpg",
+           "vote_average" => 7.0,
+           "vote_count" => 80,
+           "release_date" => "2024-01-01",
+           "media_type" => "movie"
+         }
+       ],
+       "total_pages" => 5,
+       "total_results" => 100
+     }}
+  end
+
+  def get_movies_by_genre(_, _), do: {:error, "Invalid genre ID or page"}
+
+  @impl Javi.Media.TMDB.Client
   def get_popular_movies_by_genre(genre_id) when is_integer(genre_id) and genre_id > 0 do
     {:ok,
      %{
@@ -310,4 +336,87 @@ defmodule Javi.Media.TMDB.Client.Test do
   end
 
   def get_popular_movies_by_genre(_), do: {:error, "Invalid genre ID"}
+
+  @impl Javi.Media.TMDB.Client
+  def get_popular_movies_by_genre(genre_id, page)
+      when is_integer(genre_id) and genre_id > 0 and is_integer(page) and page > 0 do
+    # Mock response for testing
+    {:ok,
+     %{
+       "page" => page,
+       "results" => [
+         %{
+           "id" => 1000 + page,
+           "title" => "Test Movie #{page}",
+           "overview" => "Test overview for movie #{page}",
+           "poster_path" => "/test-poster.jpg",
+           "vote_average" => 7.5,
+           "vote_count" => 100,
+           "release_date" => "2024-01-01",
+           "media_type" => "movie"
+         }
+       ],
+       "total_pages" => 5,
+       "total_results" => 100
+     }}
+  end
+
+  def get_popular_movies_by_genre(_, _), do: {:error, "Invalid genre ID or page"}
+
+  @impl Javi.Media.TMDB.Client
+  def get_now_playing_movies() do
+    {:ok,
+     %{
+       "results" => [
+         %{
+           "id" => 1001,
+           "title" => "Now Playing Movie 1",
+           "overview" => "Test overview for now playing movie 1",
+           "poster_path" => "/test-poster.jpg",
+           "vote_average" => 7.8,
+           "vote_count" => 150,
+           "release_date" => "2024-01-15",
+           "media_type" => "movie"
+         }
+       ]
+     }}
+  end
+
+  @impl Javi.Media.TMDB.Client
+  def get_popular_tv() do
+    {:ok,
+     %{
+       "results" => [
+         %{
+           "id" => 2001,
+           "name" => "Popular TV Show 1",
+           "overview" => "Test overview for popular TV show 1",
+           "poster_path" => "/test-poster.jpg",
+           "vote_average" => 8.2,
+           "vote_count" => 200,
+           "first_air_date" => "2024-01-10",
+           "media_type" => "tv"
+         }
+       ]
+     }}
+  end
+
+  @impl Javi.Media.TMDB.Client
+  def get_top_rated_tv() do
+    {:ok,
+     %{
+       "results" => [
+         %{
+           "id" => 2002,
+           "name" => "Top Rated TV Show 1",
+           "overview" => "Test overview for top rated TV show 1",
+           "poster_path" => "/test-poster.jpg",
+           "vote_average" => 9.1,
+           "vote_count" => 300,
+           "first_air_date" => "2024-01-05",
+           "media_type" => "tv"
+         }
+       ]
+     }}
+  end
 end

@@ -18,7 +18,13 @@ defmodule Javi.Media.TMDB.Client do
   @callback get_top_searches() :: {:ok, map()} | {:error, String.t()}
   @callback get_recent_movies() :: {:ok, map()} | {:error, String.t()}
   @callback get_movies_by_genre(integer()) :: {:ok, map()} | {:error, String.t()}
+  @callback get_movies_by_genre(integer(), integer()) :: {:ok, map()} | {:error, String.t()}
   @callback get_popular_movies_by_genre(integer()) :: {:ok, map()} | {:error, String.t()}
+  @callback get_popular_movies_by_genre(integer(), integer()) ::
+              {:ok, map()} | {:error, String.t()}
+  @callback get_now_playing_movies() :: {:ok, map()} | {:error, String.t()}
+  @callback get_popular_tv() :: {:ok, map()} | {:error, String.t()}
+  @callback get_top_rated_tv() :: {:ok, map()} | {:error, String.t()}
 
   def search_movies(query) do
     get_client().search_movies(query)
@@ -76,8 +82,28 @@ defmodule Javi.Media.TMDB.Client do
     get_client().get_movies_by_genre(genre_id)
   end
 
+  def get_movies_by_genre(genre_id, page) do
+    get_client().get_movies_by_genre(genre_id, page)
+  end
+
   def get_popular_movies_by_genre(genre_id) do
     get_client().get_popular_movies_by_genre(genre_id)
+  end
+
+  def get_popular_movies_by_genre(genre_id, page) do
+    get_client().get_popular_movies_by_genre(genre_id, page)
+  end
+
+  def get_now_playing_movies() do
+    get_client().get_now_playing_movies()
+  end
+
+  def get_popular_tv() do
+    get_client().get_popular_tv()
+  end
+
+  def get_top_rated_tv() do
+    get_client().get_top_rated_tv()
   end
 
   defp get_client do
