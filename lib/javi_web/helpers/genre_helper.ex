@@ -22,7 +22,8 @@ defmodule JaviWeb.Helpers.GenreHelper do
     "878" => "Ficção Científica",
     "10770" => "Filme para TV",
     "53" => "Suspense",
-    "37" => "Faroeste"
+    "37" => "Faroeste",
+    "10752" => "Guerra"
   }
 
   # Fallback English name to Portuguese mapping (for backward compatibility)

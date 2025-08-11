@@ -5,9 +5,13 @@ defmodule JaviWeb.Home.SearchLive do
   alias Javi.Media.TMDB.Client, as: TMDBClient
   import JaviWeb.Components.BottomNavigation
   import JaviWeb.Components.Header
+  import JaviWeb.Helpers.GenreHelper
 
   # Cache timeout in seconds (5 minutes)
   @cache_timeout 300
+  @genres_per_page 3
+  @titles_per_genre 18
+  @max_genres 12
 
   @impl true
   def mount(_params, session, socket) do
@@ -18,6 +22,28 @@ defmodule JaviWeb.Home.SearchLive do
 
     # Get user lists for the modal
     user_lists = get_user_lists(user)
+
+    # Get available genres
+    available_genres = get_available_genres()
+
+    # Initialize used titles set with existing section titles to avoid duplicates
+    existing_titles =
+      []
+      |> Enum.concat(cached_data.trending_movies || [])
+      |> Enum.concat(cached_data.trending_tv_shows || [])
+      |> Enum.concat(cached_data.recent_releases || [])
+      |> Enum.concat(cached_data.top_rated || [])
+
+    existing_title_ids =
+      existing_titles
+      |> Enum.map(fn title -> title["id"] end)
+      |> MapSet.new()
+
+    Process.put(:used_title_ids, existing_title_ids)
+
+    # Initialize with first 2 genres
+    initial_genres = Enum.take(available_genres, @genres_per_page)
+    genre_sections = load_genre_sections(initial_genres)
 
     socket =
       socket
@@ -33,6 +59,13 @@ defmodule JaviWeb.Home.SearchLive do
       |> assign(:selected_title, nil)
       |> assign(:user_lists, user_lists)
       |> assign(:selected_lists, [])
+      |> assign(:available_genres, available_genres)
+      |> assign(:loaded_genres_count, @genres_per_page)
+      |> assign(:is_loading_more, false)
+      |> assign(:max_genres, @max_genres)
+      |> assign(:genres_per_page, @genres_per_page)
+      |> assign(:titles_per_genre, @titles_per_genre)
+      |> stream(:genre_sections, genre_sections)
 
     {:ok, socket}
   end
@@ -62,6 +95,42 @@ defmodule JaviWeb.Home.SearchLive do
   @impl true
   def handle_event("clear_search", _params, socket) do
     {:noreply, assign(socket, search_results: [], query: "")}
+  end
+
+  @impl true
+  def handle_event("load_more_genres", _params, socket) do
+    if socket.assigns.loaded_genres_count < @max_genres and not socket.assigns.is_loading_more do
+      # Set loading state
+      socket = assign(socket, :is_loading_more, true)
+
+      # Get next batch of genres - load more each time for better experience
+      current_count = socket.assigns.loaded_genres_count
+
+      next_genres =
+        socket.assigns.available_genres
+        |> Enum.slice(current_count, @genres_per_page)
+
+      if next_genres != [] do
+        # Load genre sections
+        genre_sections = load_genre_sections(next_genres)
+
+        # Add to stream
+        socket = stream(socket, :genre_sections, genre_sections, at: -1)
+
+        # Update counts
+        socket =
+          assign(socket,
+            loaded_genres_count: current_count + @genres_per_page,
+            is_loading_more: false
+          )
+
+        {:noreply, socket}
+      else
+        {:noreply, assign(socket, :is_loading_more, false)}
+      end
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -281,6 +350,271 @@ defmodule JaviWeb.Home.SearchLive do
     end
   end
 
+  defp get_available_genres do
+    # Get movie genres and convert to Portuguese
+    case TMDBClient.get_movie_genres() do
+      {:ok, %{"genres" => genres}} ->
+        genres
+        |> Enum.map(fn genre ->
+          %{
+            id: genre["id"],
+            name: translate_genre_id(to_string(genre["id"])),
+            original_name: genre["name"]
+          }
+        end)
+        # Shuffle genres to get variety
+        |> Enum.shuffle()
+        |> Enum.take(@max_genres)
+
+      {:error, _} ->
+        # Fallback to basic genres if API fails
+        [
+          %{id: 28, name: "Ação", original_name: "Action"},
+          %{id: 12, name: "Aventura", original_name: "Adventure"},
+          %{id: 16, name: "Animação", original_name: "Animation"},
+          %{id: 35, name: "Comédia", original_name: "Comedy"},
+          %{id: 80, name: "Crime", original_name: "Crime"},
+          %{id: 99, name: "Documentário", original_name: "Documentary"},
+          %{id: 18, name: "Drama", original_name: "Drama"},
+          %{id: 10751, name: "Família", original_name: "Family"},
+          %{id: 14, name: "Fantasia", original_name: "Fantasy"},
+          %{id: 27, name: "Terror", original_name: "Horror"},
+          %{id: 10402, name: "Música", original_name: "Music"},
+          %{id: 9648, name: "Mistério", original_name: "Mystery"},
+          %{id: 10752, name: "Guerra", original_name: "War"}
+        ]
+        |> Enum.shuffle()
+        |> Enum.take(@max_genres)
+    end
+  end
+
+  defp load_genre_sections(genres) do
+    # Track used title IDs to avoid duplicates across all genre sections
+    used_title_ids = Process.get(:used_title_ids) || MapSet.new()
+
+    result =
+      genres
+      |> Enum.map(fn genre ->
+        titles = fetch_titles_by_genre(genre.id)
+
+        # Filter out titles that have already been used in other genre sections
+        available_titles =
+          titles
+          |> Enum.reject(fn title ->
+            title_id = title["id"]
+            MapSet.member?(used_title_ids, title_id)
+          end)
+
+        # If we don't have enough titles after deduplication, try to fetch more
+        if length(available_titles) < @titles_per_genre do
+          additional_titles = fetch_additional_titles_by_genre(genre.id, used_title_ids)
+          available_titles = available_titles ++ additional_titles
+        end
+
+        # Limit to the desired number of titles
+        final_titles = Enum.take(available_titles, @titles_per_genre)
+
+        # Add the new titles to the used set
+        new_title_ids =
+          final_titles
+          |> Enum.map(fn title -> title["id"] end)
+          |> MapSet.new()
+
+        updated_used_ids = MapSet.union(used_title_ids, new_title_ids)
+        Process.put(:used_title_ids, updated_used_ids)
+
+        %{
+          id: "genre_#{genre.id}",
+          genre: genre,
+          titles: final_titles,
+          loading: false
+        }
+      end)
+
+    result
+  end
+
+  defp fetch_titles_by_genre(genre_id) do
+    # Get both popular and recent movies for the genre to balance quality and freshness
+    popular_task =
+      Task.async(fn ->
+        case TMDBClient.get_popular_movies_by_genre(genre_id) do
+          {:ok, %{"results" => results}} ->
+            results
+
+          {:error, error} ->
+            []
+        end
+      end)
+
+    recent_task =
+      Task.async(fn ->
+        case TMDBClient.get_movies_by_genre(genre_id) do
+          {:ok, %{"results" => results}} ->
+            results
+
+          {:error, error} ->
+            []
+        end
+      end)
+
+    popular_results = Task.await(popular_task)
+    recent_results = Task.await(recent_task)
+
+    # Combine and deduplicate results
+    all_results =
+      (popular_results ++ recent_results)
+      # Remove duplicates by TMDB ID
+      |> Enum.uniq_by(& &1["id"])
+      # Filter out inappropriate content
+      |> Enum.reject(&is_inappropriate_content?/1)
+      # Smart ranking considering both factors
+      |> smart_rank_by_rating_and_recency()
+      # Fetch more titles initially to account for potential duplicates
+      |> Enum.take(@titles_per_genre * 2)
+      |> Enum.map(fn title ->
+        Map.put(title, "media_type", "movie")
+      end)
+
+    all_results
+  end
+
+  defp fetch_additional_titles_by_genre(genre_id, used_title_ids) do
+    # Get popular movies for the genre
+    popular_task =
+      Task.async(fn ->
+        case TMDBClient.get_popular_movies_by_genre(genre_id) do
+          {:ok, %{"results" => results}} ->
+            results
+
+          {:error, error} ->
+            []
+        end
+      end)
+
+    # Get recent movies for the genre
+    recent_task =
+      Task.async(fn ->
+        case TMDBClient.get_movies_by_genre(genre_id) do
+          {:ok, %{"results" => results}} ->
+            results
+
+          {:error, error} ->
+            []
+        end
+      end)
+
+    popular_results = Task.await(popular_task)
+    recent_results = Task.await(recent_task)
+
+    # Combine and deduplicate results
+    all_results =
+      (popular_results ++ recent_results)
+      # Remove duplicates by TMDB ID
+      |> Enum.uniq_by(& &1["id"])
+      # Filter out inappropriate content
+      |> Enum.reject(&is_inappropriate_content?/1)
+      # Smart ranking considering both factors
+      |> smart_rank_by_rating_and_recency()
+      # Fetch more titles initially to account for potential duplicates
+      |> Enum.take(@titles_per_genre * 2)
+      |> Enum.map(fn title ->
+        Map.put(title, "media_type", "movie")
+      end)
+
+    all_results
+  end
+
+  # Smart ranking that balances rating and recency
+  defp smart_rank_by_rating_and_recency(titles) do
+    current_year = Date.utc_today().year
+
+    titles
+    |> Enum.sort_by(
+      fn title ->
+        # Get rating and vote count
+        vote_average = title["vote_average"] || 0.0
+        vote_count = title["vote_count"] || 0
+
+        # Get release year
+        release_date = title["release_date"]
+
+        release_year =
+          case release_date do
+            date when is_binary(date) ->
+              case Date.from_iso8601(date) do
+                {:ok, parsed_date} -> parsed_date.year
+                {:error, _} -> current_year
+              end
+
+            _ ->
+              current_year
+          end
+
+        # Calculate recency score (newer movies get higher score)
+        # Base year 1990
+        recency_score = max(0, release_year - 1990) * 0.1
+
+        # Calculate rating score with vote count reliability
+        rating_score = vote_average * :math.log10(max(vote_count, 1))
+
+        # Calculate final score with balanced weights
+        # 70% rating quality, 30% recency
+        final_score = rating_score * 0.7 + recency_score * 0.3
+
+        final_score
+      end,
+      # Sort in descending order (highest scores first)
+      :desc
+    )
+  end
+
+  # Enhanced sorting for other content sections
+  defp sort_by_rating_and_popularity(titles) do
+    current_year = Date.utc_today().year
+
+    titles
+    |> Enum.sort_by(
+      fn title ->
+        # Get rating and vote count
+        vote_average = title["vote_average"] || 0.0
+        vote_count = title["vote_count"] || 0
+        popularity = title["popularity"] || 0.0
+
+        # Get release year
+        release_date = title["release_date"] || title["first_air_date"]
+
+        release_year =
+          case release_date do
+            date when is_binary(date) ->
+              case Date.from_iso8601(date) do
+                {:ok, parsed_date} -> parsed_date.year
+                {:error, _} -> current_year
+              end
+
+            _ ->
+              current_year
+          end
+
+        # Calculate recency score
+        recency_score = max(0, release_year - 1990) * 0.1
+
+        # Calculate rating score
+        rating_score = vote_average * :math.log10(max(vote_count, 1))
+
+        # Calculate popularity score
+        # Lower weight for popularity
+        popularity_score = popularity * 0.05
+
+        # Final score: 60% rating, 25% recency, 15% popularity
+        final_score = rating_score * 0.6 + recency_score * 0.25 + popularity_score * 0.15
+
+        final_score
+      end,
+      :desc
+    )
+  end
+
   defp parse_date(nil), do: nil
 
   defp parse_date(date_string) when is_binary(date_string) do
@@ -363,22 +697,43 @@ defmodule JaviWeb.Home.SearchLive do
 
   defp fetch_trending_movies do
     case TMDBClient.get_trending_movies("day") do
-      {:ok, results} -> results["results"] || []
-      {:error, _} -> []
+      {:ok, results} ->
+        (results["results"] || [])
+        # Filter out inappropriate content
+        |> Enum.reject(&is_inappropriate_content?/1)
+        # Sort by rating and popularity
+        |> sort_by_rating_and_popularity()
+
+      {:error, _} ->
+        []
     end
   end
 
   defp fetch_trending_tv_shows do
     case TMDBClient.get_trending_tv("day") do
-      {:ok, results} -> results["results"] || []
-      {:error, _} -> []
+      {:ok, results} ->
+        (results["results"] || [])
+        # Filter out inappropriate content
+        |> Enum.reject(&is_inappropriate_content?/1)
+        # Sort by rating and popularity
+        |> sort_by_rating_and_popularity()
+
+      {:error, _} ->
+        []
     end
   end
 
   defp fetch_recent_releases do
     case TMDBClient.get_upcoming_movies() do
-      {:ok, results} -> results["results"] || []
-      {:error, _} -> []
+      {:ok, results} ->
+        (results["results"] || [])
+        # Filter out inappropriate content
+        |> Enum.reject(&is_inappropriate_content?/1)
+        # Sort by rating and popularity
+        |> sort_by_rating_and_popularity()
+
+      {:error, _} ->
+        []
     end
   end
 
@@ -387,25 +742,39 @@ defmodule JaviWeb.Home.SearchLive do
     movie_task =
       Task.async(fn ->
         case TMDBClient.get_top_rated_movies() do
-          {:ok, results} -> results["results"] || []
-          {:error, _} -> []
+          {:ok, results} ->
+            (results["results"] || [])
+            # Filter out inappropriate content
+            |> Enum.reject(&is_inappropriate_content?/1)
+            # Sort by rating and popularity
+            |> sort_by_rating_and_popularity()
+
+          {:error, _} ->
+            []
         end
       end)
 
     tv_task =
       Task.async(fn ->
         case TMDBClient.get_trending_tv("week") do
-          {:ok, results} -> results["results"] || []
-          {:error, _} -> []
+          {:ok, results} ->
+            (results["results"] || [])
+            # Filter out inappropriate content
+            |> Enum.reject(&is_inappropriate_content?/1)
+            # Sort by rating and popularity
+            |> sort_by_rating_and_popularity()
+
+          {:error, _} ->
+            []
         end
       end)
 
     movies = Task.await(movie_task)
     tv_shows = Task.await(tv_task)
 
-    # Combine and shuffle results
+    # Combine and shuffle results, but keep the best ones first
     (movies ++ tv_shows)
-    |> Enum.shuffle()
+    |> sort_by_rating_and_popularity()
   end
 
   defp perform_multi_search(query) do
@@ -413,20 +782,86 @@ defmodule JaviWeb.Home.SearchLive do
       {:ok, movie_results} ->
         case TMDBClient.search_tv(query) do
           {:ok, tv_results} ->
-            {:ok, (movie_results["results"] || []) ++ (tv_results["results"] || [])}
+            results =
+              ((movie_results["results"] || []) ++ (tv_results["results"] || []))
+              # Filter out inappropriate content
+              |> Enum.reject(&is_inappropriate_content?/1)
+              # Sort by rating and popularity
+              |> sort_by_rating_and_popularity()
+
+            {:ok, results}
 
           {:error, _} ->
-            {:ok, movie_results["results"] || []}
+            results =
+              (movie_results["results"] || [])
+              # Filter out inappropriate content
+              |> Enum.reject(&is_inappropriate_content?/1)
+              # Sort by rating and popularity
+              |> sort_by_rating_and_popularity()
+
+            {:ok, results}
         end
 
       {:error, _} ->
         case TMDBClient.search_tv(query) do
           {:ok, tv_results} ->
-            {:ok, tv_results["results"] || []}
+            results =
+              (tv_results["results"] || [])
+              # Filter out inappropriate content
+              |> Enum.reject(&is_inappropriate_content?/1)
+              # Sort by rating and popularity
+              |> sort_by_rating_and_popularity()
+
+            {:ok, results}
 
           {:error, _} ->
             {:error, :search_failed}
         end
     end
+  end
+
+  # Helper function to determine if content is inappropriate
+  defp is_inappropriate_content?(title) do
+    # Check if content is marked as adult
+    if title["adult"] == true do
+      true
+    else
+      # Check for age ratings that indicate 18+ content
+      # Common age rating fields in TMDB responses
+      age_rating = title["certification"] || title["rating"] || title["age_rating"]
+
+      case age_rating do
+        rating when is_binary(rating) ->
+          # Check for various 18+ rating formats
+          rating = String.upcase(rating)
+          rating in ["18", "18+", "R", "NC-17", "X", "A", "18A", "R18", "R18+"]
+
+        _ ->
+          # If no age rating found, check other indicators
+          # Look for content warnings or mature themes
+          has_mature_content?(title)
+      end
+    end
+  end
+
+  # Check for mature content indicators
+  defp has_mature_content?(title) do
+    # Check for mature themes in overview or keywords
+    overview = String.downcase(title["overview"] || "")
+
+    # Keywords that might indicate mature content
+    mature_keywords = [
+      "sexual",
+      "nudity",
+      "explicit",
+      "mature",
+      "adult content",
+      "sexual content",
+      "sexual themes",
+      "mature themes"
+    ]
+
+    # Check if any mature keywords are in the overview
+    Enum.any?(mature_keywords, &String.contains?(overview, &1))
   end
 end
