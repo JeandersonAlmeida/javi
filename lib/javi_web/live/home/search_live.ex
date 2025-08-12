@@ -12,6 +12,8 @@ defmodule JaviWeb.Home.SearchLive do
   @genres_per_page 3
   @titles_per_genre 18
   @max_genres 12
+  # 20 seconds timeout for load more operations
+  @load_more_timeout 20000
 
   @impl true
   def mount(_params, session, socket) do
@@ -111,20 +113,45 @@ defmodule JaviWeb.Home.SearchLive do
         |> Enum.slice(current_count, @genres_per_page)
 
       if next_genres != [] do
-        # Load genre sections
-        genre_sections = load_genre_sections(next_genres)
+        # Load genre sections with error handling and timeout
+        try do
+          # Add a timeout to the entire operation
+          case Process.send_after(self(), {:load_more_timeout, current_count}, @load_more_timeout) do
+            timer_ref when is_reference(timer_ref) ->
+              # Load genre sections
+              case load_genre_sections(next_genres) do
+                genre_sections when is_list(genre_sections) and length(genre_sections) > 0 ->
+                  # Cancel timeout
+                  Process.cancel_timer(timer_ref)
 
-        # Add to stream
-        socket = stream(socket, :genre_sections, genre_sections, at: -1)
+                  # Add to stream
+                  socket = stream(socket, :genre_sections, genre_sections, at: -1)
 
-        # Update counts
-        socket =
-          assign(socket,
-            loaded_genres_count: current_count + @genres_per_page,
-            is_loading_more: false
-          )
+                  # Update counts
+                  socket =
+                    assign(socket,
+                      loaded_genres_count: current_count + @genres_per_page,
+                      is_loading_more: false
+                    )
 
-        {:noreply, socket}
+                  {:noreply, socket}
+
+                _ ->
+                  # Cancel timeout
+                  Process.cancel_timer(timer_ref)
+
+                  # Handle case where no genre sections were loaded
+                  {:noreply, assign(socket, :is_loading_more, false)}
+              end
+
+            _ ->
+              {:noreply, assign(socket, :is_loading_more, false)}
+          end
+        rescue
+          _ ->
+            # Handle any errors gracefully
+            {:noreply, assign(socket, :is_loading_more, false)}
+        end
       else
         {:noreply, assign(socket, :is_loading_more, false)}
       end
@@ -395,43 +422,54 @@ defmodule JaviWeb.Home.SearchLive do
     result =
       genres
       |> Enum.map(fn genre ->
-        titles = fetch_titles_by_genre(genre.id)
+        try do
+          titles = fetch_titles_by_genre(genre.id)
 
-        # Filter out titles that have already been used in other genre sections
-        available_titles =
-          titles
-          |> Enum.reject(fn title ->
-            title_id = title["id"]
-            MapSet.member?(used_title_ids, title_id)
-          end)
+          # Filter out titles that have already been used in other genre sections
+          available_titles =
+            titles
+            |> Enum.reject(fn title ->
+              title_id = title["id"]
+              MapSet.member?(used_title_ids, title_id)
+            end)
 
-        # If we don't have enough titles after deduplication, try to fetch more
-        available_titles =
-          if length(available_titles) < @titles_per_genre do
-            additional_titles = fetch_additional_titles_by_genre(genre.id, used_title_ids)
-            available_titles ++ additional_titles
-          else
-            available_titles
-          end
+          # If we don't have enough titles after deduplication, try to fetch more
+          available_titles =
+            if length(available_titles) < @titles_per_genre do
+              additional_titles = fetch_additional_titles_by_genre(genre.id, used_title_ids)
+              available_titles ++ additional_titles
+            else
+              available_titles
+            end
 
-        # Limit to the desired number of titles
-        final_titles = Enum.take(available_titles, @titles_per_genre)
+          # Limit to the desired number of titles
+          final_titles = Enum.take(available_titles, @titles_per_genre)
 
-        # Add the new titles to the used set
-        new_title_ids =
-          final_titles
-          |> Enum.map(fn title -> title["id"] end)
-          |> MapSet.new()
+          # Add the new titles to the used set
+          new_title_ids =
+            final_titles
+            |> Enum.map(fn title -> title["id"] end)
+            |> MapSet.new()
 
-        updated_used_ids = MapSet.union(used_title_ids, new_title_ids)
-        Process.put(:used_title_ids, updated_used_ids)
+          updated_used_ids = MapSet.union(used_title_ids, new_title_ids)
+          Process.put(:used_title_ids, updated_used_ids)
 
-        %{
-          id: "genre_#{genre.id}",
-          genre: genre,
-          titles: final_titles,
-          loading: false
-        }
+          %{
+            id: "genre_#{genre.id}",
+            genre: genre,
+            titles: final_titles,
+            loading: false
+          }
+        rescue
+          _ ->
+            # Return a minimal genre section if there's an error
+            %{
+              id: "genre_#{genre.id}",
+              genre: genre,
+              titles: [],
+              loading: false
+            }
+        end
       end)
 
     result
@@ -461,8 +499,10 @@ defmodule JaviWeb.Home.SearchLive do
         end
       end)
 
-    popular_results = Task.await(popular_task)
-    recent_results = Task.await(recent_task)
+    # 15 second timeout
+    popular_results = Task.await(popular_task, 15000)
+    # 15 second timeout
+    recent_results = Task.await(recent_task, 15000)
 
     # Combine and deduplicate results
     all_results =
@@ -507,8 +547,10 @@ defmodule JaviWeb.Home.SearchLive do
         end
       end)
 
-    popular_results = Task.await(popular_task)
-    recent_results = Task.await(recent_task)
+    # 15 second timeout
+    popular_results = Task.await(popular_task, 15000)
+    # 15 second timeout
+    recent_results = Task.await(recent_task, 15000)
 
     # Combine and deduplicate results
     all_results =
@@ -866,5 +908,11 @@ defmodule JaviWeb.Home.SearchLive do
 
     # Check if any mature keywords are in the overview
     Enum.any?(mature_keywords, &String.contains?(overview, &1))
+  end
+
+  @impl true
+  def handle_info({:load_more_timeout, _count}, socket) do
+    # Handle timeout for load more operation
+    {:noreply, assign(socket, :is_loading_more, false)}
   end
 end
