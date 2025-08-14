@@ -1,0 +1,33 @@
+# Portuguese (Brazil) translations for UI strings
+msgid ""
+msgstr ""
+"Language: pt_BR\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+# Flash titles
+msgid "Success!"
+msgstr "Sucesso!"
+
+msgid "Error!"
+msgstr "Erro!"
+
+# Client error flash
+msgid "We can't find the internet"
+msgstr "Não conseguimos encontrar a internet"
+
+msgid "Attempting to reconnect"
+msgstr "Tentando reconectar"
+
+# Server error flash
+msgid "Something went wrong!"
+msgstr "Algo deu errado!"
+
+msgid "Hang in there while we get back on track"
+msgstr "Aguarde enquanto voltamos ao normal"
+
+# Common labels
+msgid "close"
+msgstr "fechar"
+
+msgid "Actions"
+msgstr "Ações" 

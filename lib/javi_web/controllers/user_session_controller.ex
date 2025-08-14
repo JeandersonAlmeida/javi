@@ -7,17 +7,17 @@ defmodule JaviWeb.UserSessionController do
   def create(conn, %{"_action" => "registered"} = params) do
     conn
     |> put_session(:user_return_to, ~p"/configuracoes")
-    |> create(params, "Account created successfully!")
+    |> create(params, "Conta criada com sucesso!")
   end
 
   def create(conn, %{"_action" => "password_updated"} = params) do
     conn
     |> put_session(:user_return_to, ~p"/configuracoes")
-    |> create(params, "Password updated successfully!")
+    |> create(params, "Senha atualizada com sucesso!")
   end
 
   def create(conn, params) do
-    create(conn, params, "Welcome back!")
+    create(conn, params, "Bem-vindo de volta!")
   end
 
   defp create(conn, %{"user" => user_params}, info) do
@@ -28,9 +28,9 @@ defmodule JaviWeb.UserSessionController do
       |> put_flash(:info, info)
       |> UserAuth.log_in_user(user, user_params)
     else
-      # In order to prevent user enumeration attacks, don't disclose whether the email is registered.
+      # Para evitar enumeração de usuários, não informe se o email está registrado.
       conn
-      |> put_flash(:error, "Invalid email or password")
+      |> put_flash(:error, "Email ou senha inválidos")
       |> put_flash(:email, String.slice(email, 0, 160))
       |> redirect(to: ~p"/entrar")
     end
@@ -38,13 +38,13 @@ defmodule JaviWeb.UserSessionController do
 
   def logout(conn, _params) do
     conn
-    |> put_flash(:info, "Logged out successfully.")
+    |> put_flash(:info, "Logout realizado com sucesso.")
     |> UserAuth.log_out_user()
   end
 
   def delete(conn, _params) do
     conn
-    |> put_flash(:info, "Logged out successfully.")
+    |> put_flash(:info, "Logout realizado com sucesso.")
     |> UserAuth.log_out_user()
   end
 end
