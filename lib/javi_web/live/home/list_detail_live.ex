@@ -29,6 +29,7 @@ defmodule JaviWeb.Home.ListDetailLive do
            list: list,
            list_items: sorted_list_items,
            current_page: :lists,
+           pending_friend_requests: (user && Javi.Accounts.incoming_requests_count(user)) || 0,
            query: "",
            search_results: [],
            show_search: false

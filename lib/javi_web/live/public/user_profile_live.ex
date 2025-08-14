@@ -21,12 +21,43 @@ defmodule JaviWeb.Public.UserProfileLive do
         visibility = profile_user.profile_visibility || "public"
         allowed_profile = me? or visibility == "public"
 
+        # Friend count for the profile being viewed
+        friend_count = Accounts.friend_count(profile_user)
+
+        # Friendship status between viewer and profile_user
+        {is_friend, outgoing_request_id, incoming_request_id} =
+          cond do
+            is_nil(viewer) or me? ->
+              {false, nil, nil}
+
+            true ->
+              is_friend = Accounts.friends?(viewer, profile_user)
+
+              outgoing_request_id =
+                Accounts.list_outgoing_friend_requests(viewer)
+                |> Enum.find_value(nil, fn r ->
+                  if r.recipient_id == profile_user.id, do: r.id, else: nil
+                end)
+
+              incoming_request_id =
+                Accounts.list_incoming_friend_requests(viewer)
+                |> Enum.find_value(nil, fn r ->
+                  if r.sender_id == profile_user.id, do: r.id, else: nil
+                end)
+
+              {is_friend, outgoing_request_id, incoming_request_id}
+          end
+
         {:ok,
          socket
          |> assign(:profile_user, profile_user)
          |> assign(:me?, me?)
          |> assign(:allowed_profile, allowed_profile)
          |> assign(:lists, lists)
+         |> assign(:friend_count, friend_count)
+         |> assign(:is_friend, is_friend)
+         |> assign(:outgoing_request_id, outgoing_request_id)
+         |> assign(:incoming_request_id, incoming_request_id)
          # Respect fine-grained privacy toggles when profile is viewable
          |> assign(:can_show_watched, allowed_profile && (profile_user.show_watched || false))
          |> assign(:can_show_watching, allowed_profile && (profile_user.show_watching || false))
@@ -51,7 +82,7 @@ defmodule JaviWeb.Public.UserProfileLive do
                   {first_letter(@profile_user)}
                 </span>
               </div>
-              <div>
+              <div class="flex-1">
                 <h1 class="text-white text-2xl font-bold">
                   {@profile_user.display_name || "Usuário"}
                 </h1>
@@ -60,6 +91,58 @@ defmodule JaviWeb.Public.UserProfileLive do
                 <p class="text-gray-400 text-xs mt-1">
                   Visibilidade: {(@profile_user.profile_visibility || "public") |> String.capitalize()}
                 </p>
+                <div class="mt-3 flex items-center gap-3 flex-wrap">
+                  <div class="bg-[#303030] rounded-lg inline-flex items-center gap-2 px-3 py-2">
+                    <span class="text-gray-400 text-xs">Amigos</span>
+                    <span class="text-white text-sm font-semibold">{@friend_count}</span>
+                  </div>
+
+                  <%= if @me? do %>
+                    <.link navigate={~p"/amigos"} class="text-blue-400 text-xs hover:underline">
+                      Ver meus amigos
+                    </.link>
+                  <% else %>
+                    <%= cond do %>
+                      <% @is_friend -> %>
+                        <span class="text-[#ababab] text-xs">Vocês já são amigos</span>
+                      <% not is_nil(@outgoing_request_id) -> %>
+                        <div class="inline-flex items-center gap-2">
+                          <span class="text-[#ababab] text-xs">Solicitação enviada</span>
+                          <button
+                            phx-click="cancel_outgoing_request"
+                            phx-value-request_id={@outgoing_request_id}
+                            class="px-3 py-1 bg-[#333] text-white rounded hover:bg-[#444] text-xs"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      <% not is_nil(@incoming_request_id) -> %>
+                        <div class="inline-flex items-center gap-2">
+                          <button
+                            phx-click="accept_request"
+                            phx-value-request_id={@incoming_request_id}
+                            class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
+                          >
+                            Aceitar
+                          </button>
+                          <button
+                            phx-click="decline_request"
+                            phx-value-request_id={@incoming_request_id}
+                            class="px-3 py-1 bg-[#333] text-white rounded hover:bg-[#444] text-xs"
+                          >
+                            Recusar
+                          </button>
+                        </div>
+                      <% true -> %>
+                        <button
+                          phx-click="send_request"
+                          class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                        >
+                          Solicitar amizade
+                        </button>
+                    <% end %>
+                  <% end %>
+                </div>
               </div>
             </div>
           </div>
@@ -91,6 +174,80 @@ defmodule JaviWeb.Public.UserProfileLive do
       </div>
     </div>
     """
+  end
+
+  @impl true
+  def handle_event("send_request", _params, socket) do
+    viewer = socket.assigns[:current_user]
+    profile_user = socket.assigns.profile_user
+
+    if is_nil(viewer) do
+      {:noreply, put_flash(socket, :error, "Faça login para enviar solicitações")}
+    else
+      case Accounts.send_friend_request(viewer, profile_user) do
+        {:ok, req} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Solicitação enviada")
+           |> assign(:outgoing_request_id, req.id)}
+
+        {:error, :already_friends} ->
+          {:noreply, assign(socket, :is_friend, true)}
+
+        {:error, :cannot_self_request} ->
+          {:noreply, put_flash(socket, :error, "Você não pode enviar para si mesmo")}
+
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Não foi possível enviar a solicitação")}
+      end
+    end
+  end
+
+  def handle_event("cancel_outgoing_request", %{"request_id" => req_id}, socket) do
+    viewer = socket.assigns[:current_user]
+
+    case Accounts.cancel_friend_request(viewer, String.to_integer(req_id)) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Solicitação cancelada")
+         |> assign(:outgoing_request_id, nil)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Falha ao cancelar solicitação")}
+    end
+  end
+
+  def handle_event("accept_request", %{"request_id" => req_id}, socket) do
+    viewer = socket.assigns[:current_user]
+
+    case Accounts.accept_friend_request(viewer, String.to_integer(req_id)) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Solicitação aceita")
+         |> assign(:incoming_request_id, nil)
+         |> assign(:is_friend, true)
+         |> assign(:friend_count, socket.assigns.friend_count + 1)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Falha ao aceitar solicitação")}
+    end
+  end
+
+  def handle_event("decline_request", %{"request_id" => req_id}, socket) do
+    viewer = socket.assigns[:current_user]
+
+    case Accounts.decline_friend_request(viewer, String.to_integer(req_id)) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Solicitação recusada")
+         |> assign(:incoming_request_id, nil)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Falha ao recusar solicitação")}
+    end
   end
 
   # ========== Helpers ==========

@@ -18,12 +18,16 @@ defmodule JaviWeb.Home.ProfileLive do
     # Get last 5 watched titles using the same function as user settings
     recent_watched = get_recent_watched_titles(user)
 
+    friend_count = if user, do: Accounts.friend_count(user), else: 0
+
     {:ok,
      assign(socket,
        user: user,
        user_stats: user_stats,
        recent_watched: recent_watched,
-       current_page: :profile
+       current_page: :profile,
+       pending_friend_requests: (user && Javi.Accounts.incoming_requests_count(user)) || 0,
+       friend_count: friend_count
      )}
   end
 

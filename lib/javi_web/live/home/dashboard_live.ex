@@ -42,6 +42,7 @@ defmodule JaviWeb.Home.DashboardLive do
       # Subscribe to user stats updates if user is logged in
       if user do
         Phoenix.PubSub.subscribe(Javi.PubSub, "user_stats:#{user.id}")
+        Phoenix.PubSub.subscribe(Javi.PubSub, "friend_requests:#{user.id}")
       end
 
       {:ok,
@@ -55,6 +56,7 @@ defmodule JaviWeb.Home.DashboardLive do
          search_results: [],
          top_searches: top_searches,
          current_page: :home,
+         pending_friend_requests: (user && Accounts.incoming_requests_count(user)) || 0,
          show_modal: false,
          selected_title: nil,
          selected_lists: []
@@ -292,6 +294,34 @@ defmodule JaviWeb.Home.DashboardLive do
       _ ->
         {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_info({:friend_request_received, _id}, socket) do
+    user = socket.assigns.user
+
+    {:noreply,
+     assign(socket,
+       pending_friend_requests: (user && Accounts.incoming_requests_count(user)) || 0
+     )}
+  end
+
+  def handle_info({:friend_request_accepted, _recipient_id}, socket) do
+    user = socket.assigns.user
+
+    {:noreply,
+     assign(socket,
+       pending_friend_requests: (user && Accounts.incoming_requests_count(user)) || 0
+     )}
+  end
+
+  def handle_info({:friend_request_declined, _recipient_id}, socket) do
+    user = socket.assigns.user
+
+    {:noreply,
+     assign(socket,
+       pending_friend_requests: (user && Accounts.incoming_requests_count(user)) || 0
+     )}
   end
 
   # Private functions

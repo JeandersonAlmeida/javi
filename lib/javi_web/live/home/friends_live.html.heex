@@ -1,0 +1,206 @@
+~H"""
+<div class="relative flex size-full min-h-screen flex-col bg-[#141414] overflow-x-hidden">
+  <.top_header title={"Amigos (#{@total_friends})"} />
+
+  <div class="flex-1 overflow-y-auto pb-24 pt-14">
+    <div class="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
+      <!-- Search Users -->
+      <div class="bg-[#212121] rounded-lg p-4 mb-6">
+        <form phx-change="search_users">
+          <input
+            type="text"
+            name="q"
+            value={@search_query}
+            placeholder="Buscar por nome ou @apelido"
+            phx-debounce="300"
+            class="w-full bg-[#1a1a1a] text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </form>
+        <div :if={@search_query != ""} class="mt-4 space-y-2">
+          <div :if={Enum.empty?(@search_results)} class="text-[#ababab] text-sm">
+            Nenhum usuário encontrado.
+          </div>
+          <div
+            :for={u <- @search_results}
+            class="flex items-center justify-between bg-[#1a1a1a] rounded-lg p-3"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span class="text-white font-bold">
+                  {String.first(u.display_name || u.email) || "U"}
+                </span>
+              </div>
+              <div>
+                <.link
+                  navigate={"/" <> to_string(u.nickname)}
+                  class="text-white font-medium hover:underline"
+                >
+                  {u.display_name || u.email}
+                </.link>
+                <p class="text-[#ababab] text-xs">@{u.nickname}</p>
+              </div>
+            </div>
+            <% sent? = Enum.any?(@outgoing_requests, &(&1.recipient_id == u.id)) %>
+            <% already_friend? = Enum.any?(@friends, &(&1.id == u.id)) %>
+            <%= if already_friend? do %>
+              <span class="text-[#ababab] text-xs">Já são amigos</span>
+            <% else %>
+              <button
+                phx-click="send_request"
+                phx-value-user_id={u.id}
+                class={"px-3 py-2 rounded transition-colors " <> if(sent?, do: "bg-[#333] text-[#ababab] cursor-not-allowed", else: "bg-blue-600 text-white hover:bg-blue-700")}
+                disabled={sent?}
+              >
+                {if sent?, do: "Solicitação enviada", else: "Solicitar amizade"}
+              </button>
+            <% end %>
+          </div>
+        </div>
+      </div>
+      
+<!-- Incoming Requests -->
+      <div :if={!Enum.empty?(@incoming_requests)} class="bg-[#212121] rounded-lg p-4 mb-6">
+        <h3 class="text-white font-semibold mb-3">Solicitações recebidas</h3>
+        <div class="space-y-2">
+          <div
+            :for={fr <- @incoming_requests}
+            class="flex items-center justify-between bg-[#1a1a1a] rounded-lg p-3"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center">
+                <span class="text-white font-bold">
+                  {String.first(fr.sender.display_name || fr.sender.email) || "U"}
+                </span>
+              </div>
+              <div>
+                <.link
+                  navigate={"/" <> to_string(fr.sender.nickname)}
+                  class="text-white font-medium hover:underline"
+                >
+                  {fr.sender.display_name || fr.sender.email}
+                </.link>
+                <p class="text-[#ababab] text-xs">@{fr.sender.nickname}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                phx-click="accept_request"
+                phx-value-request_id={fr.id}
+                class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Aceitar
+              </button>
+              <button
+                phx-click="decline_request"
+                phx-value-request_id={fr.id}
+                class="px-3 py-2 bg-[#333] text-white rounded hover:bg-[#444]"
+              >
+                Recusar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+<!-- Outgoing Requests -->
+      <div :if={!Enum.empty?(@outgoing_requests)} class="bg-[#212121] rounded-lg p-4 mb-6">
+        <h3 class="text-white font-semibold mb-3">Solicitações enviadas</h3>
+        <div class="space-y-2">
+          <div
+            :for={fr <- @outgoing_requests}
+            class="flex items-center justify-between bg-[#1a1a1a] rounded-lg p-3"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
+                <span class="text-white font-bold">
+                  {String.first(fr.recipient.display_name || fr.recipient.email) || "U"}
+                </span>
+              </div>
+              <div>
+                <.link
+                  navigate={"/" <> to_string(fr.recipient.nickname)}
+                  class="text-white font-medium hover:underline"
+                >
+                  {fr.recipient.display_name || fr.recipient.email}
+                </.link>
+                <p class="text-[#ababab] text-xs">@{fr.recipient.nickname}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[#ababab] text-xs">Pendente</span>
+              <button
+                phx-click="cancel_outgoing_request"
+                phx-value-request_id={fr.id}
+                class="px-3 py-2 bg-[#333] text-white rounded hover:bg-[#444]"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+<!-- Friends List -->
+      <div class="bg-[#212121] rounded-lg p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-white font-semibold">Seus amigos ({@total_friends})</h3>
+          <div class="flex items-center gap-2">
+            <button
+              phx-click="prev_page"
+              class="px-3 py-2 bg-[#333] text-white rounded disabled:opacity-50"
+              disabled={@page <= 1}
+            >
+              &larr;
+            </button>
+            <span class="text-[#ababab] text-sm">
+              Página {@page} de {div(@total_friends + @page_size - 1, @page_size) |> max(1)}
+            </span>
+            <button
+              phx-click="next_page"
+              class="px-3 py-2 bg-[#333] text-white rounded disabled:opacity-50"
+              disabled={@page >= div(@total_friends + @page_size - 1, @page_size) |> max(1)}
+            >
+              &rarr;
+            </button>
+          </div>
+        </div>
+        <div :if={Enum.empty?(@friends)} class="text-[#ababab] text-sm">
+          Você ainda não adicionou amigos.
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div
+            :for={f <- @friends}
+            class="flex items-center justify-between bg-[#1a1a1a] rounded-lg p-3 hover:scale-[1.01] transition-transform"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span class="text-white font-bold">
+                  {String.first(f.display_name || f.email) || "U"}
+                </span>
+              </div>
+              <div>
+                <.link
+                  navigate={"/" <> to_string(f.nickname)}
+                  class="text-white font-medium hover:underline"
+                >
+                  {f.display_name || f.email}
+                </.link>
+                <p class="text-[#ababab] text-xs">@{f.nickname}</p>
+              </div>
+            </div>
+            <button
+              phx-click="remove_friend"
+              phx-value-user_id={f.id}
+              class="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Remover
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <.bottom_navigation current_page={@current_page} pending_count={@pending_friend_requests} />
+</div>
+"""

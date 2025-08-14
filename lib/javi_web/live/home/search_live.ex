@@ -57,6 +57,10 @@ defmodule JaviWeb.Home.SearchLive do
       |> assign(:recent_releases, cached_data.recent_releases)
       |> assign(:top_rated, cached_data.top_rated)
       |> assign(:current_page, :search)
+      |> assign(
+        :pending_friend_requests,
+        (user && Javi.Accounts.incoming_requests_count(user)) || 0
+      )
       |> assign(:show_modal, false)
       |> assign(:selected_title, nil)
       |> assign(:user_lists, user_lists)

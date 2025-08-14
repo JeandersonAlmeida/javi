@@ -69,10 +69,15 @@ defmodule JaviWeb.Router do
     live_session :require_authenticated_user,
       on_mount: [{JaviWeb.UserAuth, :ensure_authenticated}] do
       live "/inicio", Home.DashboardLive, :index
+      live "/home", Home.DashboardLive, :index
       live "/listas", Home.ListLive, :index
+      live "/lists", Home.ListLive, :index
       live "/listas/:id", Home.ListDetailLive, :show
+      live "/lists/:id", Home.ListDetailLive, :show
       live "/titulos/:id", Home.TitleDetailLive, :show
+      live "/titles/:id", Home.TitleDetailLive, :show
       live "/pesquisar", Home.SearchLive, :index
+      live "/search", Home.SearchLive, :index
       # Section routes with descriptive names for better SEO
       live "/filmes-em-alta", Home.SectionTitlesLive, :show
       live "/series-populares", Home.SectionTitlesLive, :show
@@ -80,8 +85,11 @@ defmodule JaviWeb.Router do
       live "/melhores-avaliados", Home.SectionTitlesLive, :show
       live "/genero/:genre_name/:genre_id", Home.SectionTitlesLive, :show
       live "/perfil", Home.ProfileLive, :index
+      live "/users/settings", Home.UserSettingsLive, :edit
+      live "/amigos", Home.FriendsLive, :index
       live "/configuracoes", Home.UserSettingsLive, :edit
       live "/configuracoes/confirmar-email/:token", Home.UserSettingsLive, :confirm_email
+      live "/users/settings/confirm_email/:token", Home.UserSettingsLive, :confirm_email
       live "/onboarding", Onboarding.OnboardingLive, :index
     end
   end
@@ -110,6 +118,8 @@ defmodule JaviWeb.Router do
 
     delete "/sair", UserSessionController, :delete
     get "/sair", UserSessionController, :logout
+    delete "/users/log_out", UserSessionController, :delete
+    get "/users/log_in", UserSessionController, :logout
 
     live_session :current_user,
       on_mount: [{JaviWeb.UserAuth, :mount_current_user}] do

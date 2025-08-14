@@ -5,13 +5,16 @@ defmodule Javi.MediaTest do
   alias Javi.Media.{Title, UserTitle}
 
   def user_fixture(attrs \\ %{}) do
+    base = %{
+      "email" => "test#{System.unique_integer()}@example.com",
+      "password" => "testpassword123",
+      "display_name" => "Test User"
+    }
+
+    attrs = for {k, v} <- attrs, into: %{}, do: {to_string(k), v}
+
     {:ok, user} =
-      attrs
-      |> Enum.into(%{
-        email: "test#{System.unique_integer()}@example.com",
-        password: "testpassword123",
-        display_name: "Test User"
-      })
+      Map.merge(base, attrs)
       |> Javi.Accounts.register_user()
 
     user

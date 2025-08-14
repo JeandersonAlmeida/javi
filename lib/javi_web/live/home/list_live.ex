@@ -30,6 +30,10 @@ defmodule JaviWeb.Home.ListLive do
       |> assign(:default_lists, default_lists)
       |> assign(:custom_lists, custom_lists)
       |> assign(:current_page, :media)
+      |> assign(
+        :pending_friend_requests,
+        (user && Javi.Accounts.incoming_requests_count(user)) || 0
+      )
       |> assign(:show_modal, false)
       |> assign(:show_edit_modal, false)
       |> assign(:editing_list, nil)

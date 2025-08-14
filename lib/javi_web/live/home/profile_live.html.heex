@@ -68,6 +68,17 @@
             {@user.display_name || "Usuário"}
           </h1>
           <p class="text-gray-400 text-sm lg:text-base">{@user.email}</p>
+          <div class="mt-2 flex items-center gap-3">
+            <.link
+              navigate={~p"/amigos"}
+              class="text-blue-400 text-sm hover:underline flex items-center gap-2"
+            >
+              Ver amigos
+              <span class="inline-flex items-center justify-center text-xs text-white bg-[#303030] rounded-full px-2 py-0.5">
+                {@friend_count}
+              </span>
+            </.link>
+          </div>
         </div>
         <.link
           navigate={~p"/configuracoes"}
@@ -198,5 +209,5 @@
     </div>
   </div>
 
-  <.bottom_navigation current_page={@current_page} />
+  <.bottom_navigation current_page={@current_page} pending_count={@pending_friend_requests} />
 </div>

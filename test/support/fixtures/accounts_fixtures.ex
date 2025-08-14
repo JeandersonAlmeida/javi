@@ -16,6 +16,9 @@ defmodule Javi.AccountsFixtures do
   end
 
   def user_fixture(attrs \\ %{}) do
+    # Ensure attrs are strings to match registration expectations and avoid mixed-key maps
+    attrs = for {k, v} <- attrs, into: %{}, do: {to_string(k), v}
+
     {:ok, user} =
       attrs
       |> valid_user_attributes()

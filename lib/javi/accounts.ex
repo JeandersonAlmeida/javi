@@ -6,7 +6,15 @@ defmodule Javi.Accounts do
   import Ecto.Query, warn: false
   alias Javi.Repo
 
-  alias Javi.Accounts.{User, UserToken, UserNotifier, List, ListItem, StaffUser, StaffUserToken}
+  alias Javi.Accounts.User
+  alias Javi.Accounts.UserToken
+  alias Javi.Accounts.UserNotifier
+  alias Javi.Accounts.List
+  alias Javi.Accounts.ListItem
+  alias Javi.Accounts.StaffUser
+  alias Javi.Accounts.StaffUserToken
+  alias Javi.Accounts.FriendRequest
+  alias Javi.Accounts.Friendship
 
   ## Database getters
 
@@ -910,6 +918,345 @@ defmodule Javi.Accounts do
       [] -> nil
       [first | _] -> first
     end
+  end
+
+  ## Friendships and Friend Requests
+
+  @doc """
+  Returns a paginated list of friends for the given user along with total count.
+  """
+  def list_friends(%User{} = user, page, page_size)
+      when is_integer(page) and page >= 1 and is_integer(page_size) and page_size > 0 do
+    # Union both sides to get full friend list as Users
+    left_side =
+      from fr in Friendship,
+        where: fr.user_id == ^user.id,
+        join: u in User,
+        on: u.id == fr.friend_id,
+        select: u
+
+    right_side =
+      from fr in Friendship,
+        where: fr.friend_id == ^user.id,
+        join: u in User,
+        on: u.id == fr.user_id,
+        select: u
+
+    union_query =
+      left_side
+      |> union_all(^right_side)
+
+    # Total count is sum of both sides
+    total_left =
+      Repo.one(from fr in Friendship, where: fr.user_id == ^user.id, select: count(fr.id))
+
+    total_right =
+      Repo.one(from fr in Friendship, where: fr.friend_id == ^user.id, select: count(fr.id))
+
+    total = (total_left || 0) + (total_right || 0)
+
+    offset = (page - 1) * page_size
+
+    friends =
+      union_query
+      |> subquery()
+      |> order_by([u], asc: u.display_name)
+      |> limit(^page_size)
+      |> offset(^offset)
+      |> Repo.all()
+
+    {friends, total}
+  end
+
+  @doc """
+  Returns true if two users are friends.
+  """
+  def friends?(%User{} = a, %User{} = b) do
+    count =
+      from(fr in Friendship,
+        where:
+          (fr.user_id == ^a.id and fr.friend_id == ^b.id) or
+            (fr.user_id == ^b.id and fr.friend_id == ^a.id),
+        select: count(fr.id)
+      )
+      |> Repo.one()
+
+    (count || 0) > 0
+  end
+
+  @doc """
+  Returns the number of friends a user has.
+  """
+  def friend_count(%User{} = user) do
+    left =
+      Repo.one(from fr in Friendship, where: fr.user_id == ^user.id, select: count(fr.id)) || 0
+
+    right =
+      Repo.one(from fr in Friendship, where: fr.friend_id == ^user.id, select: count(fr.id)) || 0
+
+    left + right
+  end
+
+  @doc """
+  Searches users by display name or @nickname, excluding current user,
+  already-friends, and pending friend requests with current user.
+  """
+  def search_users_for_friendship(%User{} = current_user, q, limit \\ 20)
+      when is_binary(q) and is_integer(limit) and limit > 0 do
+    q = String.trim(q)
+
+    if q == "" do
+      []
+    else
+      {nickname_term, name_term} =
+        if String.starts_with?(q, "@") do
+          nn = q |> String.trim_leading("@") |> normalize_nickname()
+          {nn, nil}
+        else
+          {normalize_nickname(q), q}
+        end
+
+      base =
+        from u in User,
+          where: u.id != ^current_user.id,
+          limit: ^limit,
+          order_by: [asc: u.display_name]
+
+      base =
+        if is_binary(name_term) do
+          where(
+            base,
+            [u],
+            ilike(u.display_name, ^"%#{name_term}%") or ilike(u.nickname, ^"%#{name_term}%")
+          )
+        else
+          base
+        end
+
+      base =
+        if nickname_term != "" do
+          where(base, [u], ilike(u.nickname, ^"#{nickname_term}%"))
+        else
+          base
+        end
+
+      # Exclude existing friendships with left joins and null checks
+      base =
+        from u in base,
+          left_join: fr1 in Friendship,
+          on: fr1.user_id == ^current_user.id and fr1.friend_id == u.id,
+          left_join: fr2 in Friendship,
+          on: fr2.friend_id == ^current_user.id and fr2.user_id == u.id,
+          where: is_nil(fr1.id) and is_nil(fr2.id)
+
+      # Exclude pending friend requests in any direction
+      base =
+        from u in base,
+          left_join: r1 in FriendRequest,
+          on:
+            r1.sender_id == ^current_user.id and r1.recipient_id == u.id and
+              r1.status == :pending,
+          left_join: r2 in FriendRequest,
+          on:
+            r2.sender_id == u.id and r2.recipient_id == ^current_user.id and
+              r2.status == :pending,
+          where: is_nil(r1.id) and is_nil(r2.id)
+
+      Repo.all(base)
+    end
+  end
+
+  @doc """
+  Sends a friend request from sender to recipient.
+  """
+  def send_friend_request(%User{} = sender, %User{} = recipient) do
+    cond do
+      sender.id == recipient.id ->
+        {:error, :cannot_self_request}
+
+      friends?(sender, recipient) ->
+        {:error, :already_friends}
+
+      Repo.get_by(FriendRequest,
+        sender_id: sender.id,
+        recipient_id: recipient.id,
+        status: :pending
+      ) ->
+        {:error, :already_requested}
+
+      Repo.get_by(FriendRequest,
+        sender_id: recipient.id,
+        recipient_id: sender.id,
+        status: :pending
+      ) ->
+        {:error, :already_requested}
+
+      true ->
+        %FriendRequest{}
+        |> FriendRequest.create_changeset(%{sender_id: sender.id, recipient_id: recipient.id})
+        |> Repo.insert()
+        |> case do
+          {:ok, req} ->
+            Phoenix.PubSub.broadcast(
+              Javi.PubSub,
+              "friend_requests:#{recipient.id}",
+              {:friend_request_received, req.id}
+            )
+
+            {:ok, req}
+
+          other ->
+            other
+        end
+    end
+  end
+
+  @doc """
+  Accepts a friend request by id for the recipient user.
+  Creates a friendship and removes the request.
+  """
+  def accept_friend_request(%User{} = recipient, request_id) when is_integer(request_id) do
+    case Repo.get_by(FriendRequest, id: request_id, recipient_id: recipient.id, status: :pending) do
+      nil ->
+        {:error, :not_found}
+
+      %FriendRequest{} = req ->
+        multi =
+          Ecto.Multi.new()
+          |> Ecto.Multi.insert(
+            :friendship,
+            Friendship.create_changeset(%Friendship{}, %{
+              user_id: req.sender_id,
+              friend_id: req.recipient_id
+            })
+          )
+          |> Ecto.Multi.delete(:request, req)
+
+        case Repo.transaction(multi) do
+          {:ok, %{friendship: friendship}} ->
+            Phoenix.PubSub.broadcast(Javi.PubSub, "friends:#{req.sender_id}", {:friends_updated})
+
+            Phoenix.PubSub.broadcast(
+              Javi.PubSub,
+              "friends:#{req.recipient_id}",
+              {:friends_updated}
+            )
+
+            Phoenix.PubSub.broadcast(
+              Javi.PubSub,
+              "friend_requests:#{req.sender_id}",
+              {:friend_request_accepted, recipient.id}
+            )
+
+            {:ok, friendship}
+
+          {:error, _op, reason, _changes} ->
+            {:error, reason}
+        end
+    end
+  end
+
+  @doc """
+  Declines a friend request by id for the recipient user.
+  """
+  def decline_friend_request(%User{} = recipient, request_id) when is_integer(request_id) do
+    case Repo.get_by(FriendRequest, id: request_id, recipient_id: recipient.id, status: :pending) do
+      nil ->
+        {:error, :not_found}
+
+      %FriendRequest{} = req ->
+        case Repo.delete(req) do
+          {:ok, _} -> {:ok, :deleted}
+          {:error, reason} -> {:error, reason}
+        end
+    end
+  end
+
+  @doc """
+  Cancels an outgoing friend request by id for the sender user.
+  """
+  def cancel_friend_request(%User{} = sender, request_id) when is_integer(request_id) do
+    case Repo.get_by(FriendRequest, id: request_id, sender_id: sender.id, status: :pending) do
+      nil ->
+        {:error, :not_found}
+
+      %FriendRequest{} = req ->
+        case Repo.delete(req) do
+          {:ok, _} ->
+            Phoenix.PubSub.broadcast(
+              Javi.PubSub,
+              "friend_requests:#{req.recipient_id}",
+              {:friend_request_canceled, req.id}
+            )
+
+            {:ok, :deleted}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
+    end
+  end
+
+  @doc """
+  Removes a friendship between two users.
+  """
+  def remove_friend(%User{} = a, %User{} = b) do
+    {user_id, friend_id} = if a.id < b.id, do: {a.id, b.id}, else: {b.id, a.id}
+
+    case Repo.get_by(Friendship, user_id: user_id, friend_id: friend_id) do
+      nil ->
+        {:error, :not_found}
+
+      friendship ->
+        case Repo.delete(friendship) do
+          {:ok, _} ->
+            Phoenix.PubSub.broadcast(Javi.PubSub, "friends:#{a.id}", {:friends_updated})
+            Phoenix.PubSub.broadcast(Javi.PubSub, "friends:#{b.id}", {:friends_updated})
+            {:ok, :deleted}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
+    end
+  end
+
+  @doc """
+  Lists incoming (pending) friend requests for the user, preloading senders.
+  """
+  def list_incoming_friend_requests(%User{} = user) do
+    from(r in FriendRequest,
+      where: r.recipient_id == ^user.id and r.status == :pending,
+      join: s in User,
+      on: s.id == r.sender_id,
+      order_by: [desc: r.inserted_at],
+      select: %{r | sender: s}
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists outgoing (pending) friend requests for the user, preloading recipients.
+  """
+  def list_outgoing_friend_requests(%User{} = user) do
+    from(r in FriendRequest,
+      where: r.sender_id == ^user.id and r.status == :pending,
+      join: rc in User,
+      on: rc.id == r.recipient_id,
+      order_by: [desc: r.inserted_at],
+      select: %{r | recipient: rc}
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns the number of pending incoming friend requests for the user.
+  """
+  def incoming_requests_count(%User{} = user) do
+    Repo.one(
+      from r in FriendRequest,
+        where: r.recipient_id == ^user.id and r.status == :pending,
+        select: count(r.id)
+    ) || 0
   end
 
   # --- Nickname helpers (Accounts) ---

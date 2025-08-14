@@ -74,6 +74,28 @@ defmodule JaviWeb.Components.BottomNavigation do
             Perfil
           </p>
         </.link>
+        <.link
+          navigate={~p"/amigos"}
+          class={"just flex flex-1 flex-col items-center justify-end gap-1 #{if @current_page == :friends, do: "text-white", else: "text-[#ababab]"}"}
+        >
+          <div class={"#{if @current_page == :friends, do: "text-white", else: "text-[#ababab]"} relative flex h-8 items-center justify-center"}>
+            <.icon
+              name={
+                if @current_page == :friends, do: "hero-user-group-solid", else: "hero-user-group"
+              }
+              class="w-6 h-6"
+            />
+            <span
+              :if={assigns[:pending_count] && @pending_count > 0}
+              class="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] leading-none px-1.5 py-0.5 rounded-full"
+            >
+              {@pending_count}
+            </span>
+          </div>
+          <p class={"#{if @current_page == :friends, do: "text-white", else: "text-[#ababab]"} text-xs font-medium leading-normal tracking-[0.015em]"}>
+            Amigos
+          </p>
+        </.link>
       </div>
     </div>
 
@@ -137,6 +159,26 @@ defmodule JaviWeb.Components.BottomNavigation do
               class="w-6 h-6"
             />
             <span class="font-medium">Perfil</span>
+          </.link>
+          <.link
+            navigate={~p"/amigos"}
+            class={"flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 hover:bg-[#2a2a2a] #{if @current_page == :friends, do: "bg-[#2a2a2a] text-white", else: "text-[#ababab] hover:text-white"}"}
+          >
+            <div class="relative">
+              <.icon
+                name={
+                  if @current_page == :friends, do: "hero-user-group-solid", else: "hero-user-group"
+                }
+                class="w-6 h-6"
+              />
+              <span
+                :if={assigns[:pending_count] && @pending_count > 0}
+                class="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] leading-none px-1.5 py-0.5 rounded-full"
+              >
+                {@pending_count}
+              </span>
+            </div>
+            <span class="font-medium">Amigos</span>
           </.link>
         </nav>
         
