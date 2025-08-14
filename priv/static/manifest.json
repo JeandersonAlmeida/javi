@@ -1,15 +1,15 @@
 {
-  "name": "Javi - Your Entertainment Companion",
+  "name": "Javi - Seu app de filmes e séries",
   "short_name": "Javi",
-  "description": "Track your watchlist, discover new content, and never lose track of what you want to watch next. Your personal entertainment companion.",
+  "description": "Acompanhe sua lista de filmes e séries, descubra novas produções e nunca perca o que você quer assistir.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#8b5cf6",
   "orientation": "portrait-primary",
   "scope": "/",
-  "lang": "en",
-  "categories": ["entertainment", "productivity", "lifestyle"],
+  "lang": "pt-BR",
+  "categories": ["filmes", "séries", "streaming", "assistir"],
   "icons": [
     {
       "src": "/images/icon-72x72.png",
@@ -62,9 +62,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View your dashboard",
+      "name": "Início",
+      "short_name": "Início",
+      "description": "Ver sua página inicial",
       "url": "/home",
       "icons": [
         {
@@ -74,9 +74,9 @@
       ]
     },
     {
-      "name": "Search",
-      "short_name": "Search",
-      "description": "Search for movies and shows",
+      "name": "Pesquisar",
+      "short_name": "Pesquisar",
+      "description": "Pesquisar filmes e séries",
       "url": "/search",
       "icons": [
         {
@@ -86,9 +86,9 @@
       ]
     },
     {
-      "name": "My Lists",
-      "short_name": "Lists",
-      "description": "View your watchlists",
+      "name": "Minhas listas",
+      "short_name": "Listas",
+      "description": "Ver suas listas",
       "url": "/lists",
       "icons": [
         {
