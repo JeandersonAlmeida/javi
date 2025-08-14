@@ -15,7 +15,7 @@ defmodule JaviWeb.FriendsLiveTest do
 
     # Search user
     lv
-    |> element("input[name=q]")
+    |> element("form[phx-change=search_users]")
     |> render_change(%{"q" => "Other"})
 
     assert render(lv) =~ "Other User"

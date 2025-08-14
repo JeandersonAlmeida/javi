@@ -22,7 +22,7 @@ defmodule JaviWeb.UserAuthTest do
       conn = UserAuth.log_in_user(conn, user)
       assert token = get_session(conn, :user_token)
       assert get_session(conn, :live_socket_id) == "users_sessions:#{Base.url_encode64(token)}"
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/inicio"
       assert Accounts.get_user_by_session_token(token)
     end
 
@@ -216,7 +216,7 @@ defmodule JaviWeb.UserAuthTest do
     test "redirects if user is authenticated", %{conn: conn, user: user} do
       conn = conn |> assign(:current_user, user) |> UserAuth.redirect_if_user_is_authenticated([])
       assert conn.halted
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/inicio"
     end
 
     test "does not redirect if user is not authenticated", %{conn: conn} do
@@ -231,10 +231,10 @@ defmodule JaviWeb.UserAuthTest do
       conn = conn |> fetch_flash() |> UserAuth.require_authenticated_user([])
       assert conn.halted
 
-      assert redirected_to(conn) == ~p"/users/log_in"
+      assert redirected_to(conn) == ~p"/entrar"
 
       assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-               "You must log in to access this page."
+               "Você deve fazer login para acessar esta página."
     end
 
     test "stores the path to redirect to on GET", %{conn: conn} do

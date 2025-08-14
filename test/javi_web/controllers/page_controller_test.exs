@@ -1,14 +1,14 @@
 defmodule JaviWeb.PageControllerTest do
   use JaviWeb.ConnCase
 
-  test "GET / redirects unauthenticated users to login", %{conn: conn} do
+  test "GET / renders landing for unauthenticated users", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert redirected_to(conn) == ~p"/entrar"
+    assert html_response(conn, 200) =~ "Javi"
   end
 
-  test "GET / redirects authenticated users to dashboard", %{conn: conn} do
+  test "GET / renders landing for authenticated users", %{conn: conn} do
     user = Javi.AccountsFixtures.user_fixture()
     conn = conn |> log_in_user(user) |> get(~p"/")
-    assert redirected_to(conn) == ~p"/inicio"
+    assert html_response(conn, 200) =~ "Javi"
   end
 end
