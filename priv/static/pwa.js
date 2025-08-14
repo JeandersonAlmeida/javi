@@ -49,6 +49,14 @@ class PWA {
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
+            // Prevent reload loops across controller changes
+            const alreadyReloaded = sessionStorage.getItem('sw-reloaded');
+            if (alreadyReloaded === '1') {
+                // Clear flag and skip reloading again
+                sessionStorage.removeItem('sw-reloaded');
+                return;
+            }
+            sessionStorage.setItem('sw-reloaded', '1');
             refreshing = true;
             window.location.reload();
         });

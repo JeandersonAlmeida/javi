@@ -25,6 +25,13 @@ defmodule JaviWeb.Router do
     live "/", Landing.LandingLive, :index
   end
 
+  # Well-known endpoints
+  scope "/.well-known", JaviWeb do
+    pipe_through :api
+
+    get "/appspecific/com.chrome.devtools.json", WellKnownController, :chrome_devtools
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", JaviWeb do
   #   pipe_through :api

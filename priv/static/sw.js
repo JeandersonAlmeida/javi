@@ -1,6 +1,6 @@
 const CACHE_NAME = 'javi-v1';
 const urlsToCache = [
-    '/',
+    // Cache core assets only; avoid caching root to reduce redirect loops
     '/assets/app.css',
     '/assets/app.js',
     '/images/logo.svg',
