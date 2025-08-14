@@ -17,7 +17,7 @@ defmodule JaviWeb.Account.ResetPasswordLive do
       </div>
       
     <!-- Main Card -->
-      <div class="relative w-full max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl">
+      <div class="relative w-full max-w-xllg:max-w-lg xl:max-w-xl 2xl:max-w-2xl">
         <!-- Card Container -->
         <div class="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-12 xl:p-16 transform transition-all duration-500 hover:scale-105">
           <!-- Header -->
